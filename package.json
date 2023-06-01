@@ -1,0 +1,20 @@
+{
+  "name": "stype",
+  "version": "0.1.0",
+  "description": "TypeScript tool for creating class names dynamically",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
+  "files": [ "lib" ],
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "keywords": [],
+  "author": "Luca Lorenzini",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "typescript": "^5.0.4"
+  }
+}
