@@ -55,7 +55,7 @@ Uage in a React component
 ```jsx
 import { st } from "stype";
 
-export function Component({ active = true, className = "rounded" }) {
+export function Component({ active = true, className = "text-xl" }) {
 
   const buttonStyle = st({
     base: "rounded px-4 py-2",
@@ -73,7 +73,7 @@ export function Component({ active = true, className = "rounded" }) {
 }
 
 //  <div class="flex items-end mt-4">
-//    <button class="rounded px-4 py-2 bg-indigo-600 rounded">
+//    <button class="rounded px-4 py-2 bg-indigo-600 text-xl">
 //      Save
 //    </button>
 //  </div>
@@ -84,7 +84,7 @@ export function Component({ active = true, className = "rounded" }) {
 To enable Tailwindcss IntelliSense on `st()` calls, add this class regex to 
 your `.vscode/settiongs.json`
 
-```json
+```jsonc
 {
   "tailwindCSS.experimental.classRegex": [
     // Match "st" invocation outside className and class attributes
