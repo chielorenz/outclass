@@ -50,7 +50,7 @@ const className = st("block mx-auto", "block");
 
 ## Example 
 
-Uage in a React component
+Usage in a React component
 
 ```jsx
 import { st } from "stype";
