@@ -1,6 +1,8 @@
 # Stype
 
-Typescript tool for creating classes dinamically
+Tool for the dynamic creation of CSS classes.
+
+Stype is a dev-friendly TypeScript tool that takes various types of input and returns a string containing CSS classes. It is especially useful when used with atomic css frameworks like [TailwindCSS](https://tailwindcss.com/docs/installation) and [UnoCSS](https://unocss.dev/)
 
 ## Intallation
 
@@ -11,10 +13,11 @@ npm install github:b1n01/stype
 yarn add github:b1n01/stype
 pnpm add github:b1n01/stype
 ```
+
 ### Deno
 
 ```ts   
-import { s } from "https://cdn.jsdelivr.net/gh/b1n01/stype/src/index.ts"
+import { s } from "https://esm.sh/gh/b1n01/stype";
 ```
 
 ### Bun
@@ -169,10 +172,7 @@ s.parse("p-4", "mx-auto", "p-4");
 // mx-auto p-4
 ```
 
-
-## Frameworks integration
-
-Stype is particularly useful when used with atomic css framework like [TailwindCSS](https://tailwindcss.com/docs/installation) and [UnoCSS](https://unocss.dev/)
+## Integrations
 
 ### VS Code TailwindCSS IntelliSense
 
