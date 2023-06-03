@@ -5,7 +5,9 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
-  "files": [ "lib" ],
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"

@@ -14,31 +14,72 @@ function isObject(item: unknown): item is StyleObject {
   return typeof item === "object" && item !== null;
 }
 
-export function st(...props: StyleArray): string {
-  const classes = new Set();
+function parse(...params: StyleArray): Set<string> {
+  const tokens = new Set<string>();
 
-  for (const prop of props) {
-    let next = "";
-    if (isArray(prop)) {
-      next = st(...prop);
-    } else if (isObject(prop)) {
-      next = st(...Object.values(prop));
-    } else if (prop) {
-      next = prop;
+  for (const param of params) {
+    let next: Set<string> = new Set<string>();
+    if (isArray(param)) {
+      next = parse(...param);
+    } else if (isObject(param)) {
+      next = parse(...Object.values(param));
+    } else if (param) {
+      param
+        .split(" ")
+        .filter((token) => token)
+        .map((token) => token.trim())
+        .forEach((token) => {
+          next.delete(token);
+          next.add(token);
+        });
     }
 
-    const tokens = next
-      .split(" ")
-      .map((t) => t.trim())
-      .filter((t) => t);
-
-    for (const token of tokens) {
-      if (classes.has(token)) {
-        classes.delete(token);
-      }
-      classes.add(token);
+    for (const token of next) {
+      tokens.delete(token);
+      tokens.add(token);
     }
   }
 
-  return [...classes].join(" ");
+  return tokens;
 }
+
+const stype = {
+  from: function (...params: StyleArray): Builder {
+    return new Builder(params);
+  },
+
+  parse: function (...params: StyleArray): string {
+    return [...parse(params)].join(" ");
+  },
+};
+
+class Builder {
+  private tokens = new Set<string>();
+
+  constructor(...params: StyleArray) {
+    this.add(params);
+  }
+
+  public add(...params: StyleArray): Builder {
+    for (const token of parse(params)) {
+      this.tokens.delete(token);
+      this.tokens.add(token);
+    }
+
+    return this;
+  }
+
+  public remove(...params: StyleArray): Builder {
+    for (const token of parse(params)) {
+      this.tokens.delete(token);
+    }
+
+    return this;
+  }
+
+  public parse() {
+    return [...this.tokens].join(" ");
+  }
+}
+
+export { stype as s };
