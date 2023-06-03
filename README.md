@@ -1,6 +1,6 @@
 # Stype
 
-Typescript tool for creating class names dinamically
+Typescript tool for creating classes dinamically
 
 ## Intallation
 
@@ -25,7 +25,7 @@ bun add github:b1n01/stype
 
 ## Basic usage
 
-Creating classes from various imput
+Creating classes from various input
 
 ```ts
 import { s } from "stype";
@@ -116,6 +116,7 @@ import { s } from "stype";
 s.parse("", null, undefined, false);
 // ""
 ```
+
 ## Builder
 
 The `s.from` function return a builder, a utility class that keep track of added and removed classes. The builder has a `parse` function that returns the string containing all classes.
@@ -144,7 +145,7 @@ style.parse();
 // rounded border-4 m-auto p-2
 ```
 
-## Feature
+## Features
 
 ### Uniqueness
 
@@ -169,7 +170,7 @@ s.parse("p-4", "mx-auto", "p-4");
 ```
 
 
-## CSS frameworks integration
+## Frameworks integration
 
 Stype is particularly useful when used with atomic css framework like [TailwindCSS](https://tailwindcss.com/docs/installation) and [UnoCSS](https://unocss.dev/)
 
@@ -181,7 +182,7 @@ To enable TailwindCSS IntelliSense on Stype functions call, add this class regex
 {
   "tailwindCSS.experimental.classRegex": [
     // Enable IntelliSense on Stype function calls outside "className" attribute
-    ["s.(parse|from|add|remove)\\s*\\(\\s*{\\s*([\\s\\S]*?)\\s*}\\s*\\)\\s*;", "[\"'`]([^\"'`]*)[\"'`]"]
+    ["\\.(parse|from|add|remove)\\s*\\(\\s*{\\s*([\\s\\S]*?)\\s*}\\s*\\)\\s*;", "[\"'`]([^\"'`]*)[\"'`]"]
   ],
 }
 ```
