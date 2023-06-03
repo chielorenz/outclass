@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Tool for the dynamic creation of CSS classess",
   "main": "lib/index.js",
-  "types": "lib/index.d.ts"
+  "types": "lib/index.d.ts",
   "type": "module",
   "files": [
     "lib"
