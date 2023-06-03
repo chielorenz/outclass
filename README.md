@@ -5,6 +5,7 @@ Tool for the dynamic creation of CSS classes.
 Stype is a dev-friendly TypeScript tool that takes various types of input and returns a string containing CSS classes. It is especially useful when used with atomic css frameworks like [TailwindCSS](https://tailwindcss.com/docs/installation) and [UnoCSS](https://unocss.dev/)
 
 Try out the interactive playground on [StackBlitz](https://stackblitz.com/github/b1n01/stype-playground).
+
 ## Intallation
 
 ### Node
@@ -27,7 +28,7 @@ import { s } from "https://esm.sh/gh/b1n01/stype";
 bun add github:b1n01/stype
 ```
 
-## Basic usage
+## Usage
 
 Creating classes from various input
 
@@ -183,7 +184,7 @@ To enable TailwindCSS IntelliSense on Stype functions call, add this class regex
 {
   "tailwindCSS.experimental.classRegex": [
     // Enable IntelliSense on Stype function calls outside "className" attribute
-    ["\\.(parse|from|add|remove)\\s*\\(\\s*{\\s*([\\s\\S]*?)\\s*}\\s*\\)\\s*;", "[\"'`]([^\"'`]*)[\"'`]"]
+    ["\\.(?:parse|from|add|remove)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*", "[\"'`]([^\"'`]*)[\"'`]"],
   ],
 }
 ```
