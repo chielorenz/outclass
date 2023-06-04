@@ -56,6 +56,11 @@ describe("Parser", () => {
     expect(s.parse({ a: ["a"] })).toBe("a");
   });
 
+  test("Repeated", () => {
+    expect(s.parse("a a")).toBe("a");
+    expect(s.parse("a", "a")).toBe("a");
+  });
+
   test("Performance", () => {
     const length = 100000;
     const big = Array.from({ length }, () => "a");
