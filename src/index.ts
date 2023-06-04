@@ -1,41 +1,46 @@
-export type StyleValue = string | undefined | null;
+namespace Stype {
+  export type Value = string | undefined | null | boolean;
 
-export type StyleObject = {
-  [key: string]: StyleValue | StyleArray | StyleObject;
-};
+  export type Object = {
+    [key: string]: Value | List | Object;
+  };
 
-export type StyleArray = Array<StyleValue | StyleArray | StyleObject>;
-
-function isArray(item: unknown): item is StyleArray {
-  return Array.isArray(item);
+  export type List = Array<Value | List | Object>;
 }
 
-function isObject(item: unknown): item is StyleObject {
-  return typeof item === "object" && item !== null;
+function isArray(item: unknown): item is Stype.List {
+  return item instanceof Array;
 }
 
-function parse(...params: StyleArray): Set<string> {
+function isObject(item: unknown): item is Stype.Object {
+  return Object.prototype.toString.call(item) === "[object Object]";
+}
+
+function isString(item: unknown): item is string {
+  return typeof item === "string";
+}
+
+function isSet(item: unknown): item is Set<string> {
+  return item instanceof Set;
+}
+
+function parse(...params: Stype.List): Set<string> {
   const tokens = new Set<string>();
 
   for (const param of params) {
-    let next: Set<string> = new Set<string>();
+    let next = new Set<string>();
     if (isArray(param)) {
       next = parse(...param);
     } else if (isObject(param)) {
       next = parse(...Object.values(param));
-    } else if (param) {
+    } else if (isString(param)) {
       param
         .split(" ")
         .filter((token) => token)
-        .map((token) => token.trim())
-        .forEach((token) => {
-          next.delete(token);
-          next.add(token);
-        });
+        .forEach((token) => next.add(token));
     }
 
     for (const token of next) {
-      tokens.delete(token);
       tokens.add(token);
     }
   }
@@ -43,43 +48,68 @@ function parse(...params: StyleArray): Set<string> {
   return tokens;
 }
 
-const stype = {
-  from: function (...params: StyleArray): Builder {
+class Parser {
+  public from(...params: Stype.List): Builder {
     return new Builder(params);
-  },
-
-  parse: function (...params: StyleArray): string {
-    return [...parse(params)].join(" ");
-  },
-};
-
-class Builder {
-  private tokens = new Set<string>();
-
-  constructor(...params: StyleArray) {
-    this.add(params);
   }
 
-  public add(...params: StyleArray): Builder {
-    for (const token of parse(params)) {
-      this.tokens.delete(token);
-      this.tokens.add(token);
-    }
-
-    return this;
-  }
-
-  public remove(...params: StyleArray): Builder {
-    for (const token of parse(params)) {
-      this.tokens.delete(token);
-    }
-
-    return this;
-  }
-
-  public parse() {
-    return [...this.tokens].join(" ");
+  public parse(...params: Stype.List): string {
+    return this.from(params).parse();
   }
 }
 
+class Builder {
+  private tokens = new Map<number | string, string | Set<string>>();
+
+  constructor(...params: Stype.List) {
+    this.add(params);
+  }
+
+  public add(...params: Stype.List): Builder {
+    for (const token of parse(params)) {
+      this.tokens.set(this.tokens.size + 1, token);
+    }
+    return this;
+  }
+
+  public remove(...params: Stype.List): Builder {
+    for (const token of parse(params)) {
+      for (const [key, value] of this.tokens.entries()) {
+        if (token === value) {
+          this.tokens.delete(key);
+          break;
+        }
+      }
+    }
+    return this;
+  }
+
+  public set(key: string, ...params: Stype.List): Builder {
+    this.tokens.set(key, parse(params));
+    return this;
+  }
+
+  public delete(key: string): Builder {
+    this.tokens.delete(key);
+    return this;
+  }
+
+  public parse(): string {
+    let classes = new Set<string>();
+    for (const token of this.tokens.values()) {
+      if (isSet(token)) {
+        for (const value of token) {
+          classes.add(value);
+        }
+      } else {
+        classes.add(token);
+      }
+    }
+
+    return [...classes].join(" ");
+  }
+}
+
+const stype = new Parser();
 export { stype as s };
+export default stype;
