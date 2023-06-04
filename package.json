@@ -9,14 +9,16 @@
     "lib"
   ],
   "scripts": {
+    "dev": "nodemon --watch './{src,test}/' -e js,ts --exec 'npm run build && npm run test'",
     "build": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [],
-  "author": "Luca Lorenzini",
+  "author": "b1n01",
   "license": "MIT",
   "devDependencies": {
     "jest": "^29.5.0",
+    "nodemon": "^2.0.22",
     "typescript": "^5.0.4"
   }
 }
