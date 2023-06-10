@@ -62,7 +62,7 @@ class Parser {
     return [...parse(params)].join(" ");
   }
 
-  public layer(): Layer {
+  get layer(): Layer {
     return new Layer();
   }
 }
@@ -101,7 +101,7 @@ class Layer {
     return this;
   }
 
-  public patch(): Stype.Patch {
+  get patch(): Stype.Patch {
     return this.actions;
   }
 
