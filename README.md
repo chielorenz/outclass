@@ -18,7 +18,7 @@ pnpm add github:b1n01/stype
 
 ### Deno
 
-```ts   
+```ts
 import { s } from "https://esm.sh/gh/b1n01/stype";
 ```
 
@@ -62,7 +62,7 @@ s.from().set("space", "p-4 m-4").set("size", "w-8 h-8").delete("space").parse();
 
 ## Documentation
 
-### Parser 
+### Parser
 
 The function `s.parse()` is the main function to parse classe. It takes any number of arguments of type string, array of strings or objects with string property values. It always returns a string.
 
@@ -99,8 +99,8 @@ The `s.from()` function return a builder, a utility class that keep track of add
 import { s } from "stype";
 
 const style = s.from("flex mx-auto");
-style.remove("mx-auto")
-style.add("ml-2")
+style.remove("mx-auto");
+style.add("ml-2");
 
 style.parse();
 // flex ml-2
@@ -158,7 +158,10 @@ To enable TailwindCSS IntelliSense on Stype functions call, add this class regex
 {
   "tailwindCSS.experimental.classRegex": [
     // Enable IntelliSense on Stype function calls outside "className" attribute
-    ["\\.(?:parse|from|add|remove)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*", "[\"'`]([^\"'`]*)[\"'`]"],
-  ],
+    [
+      "\\.(?:parse|from|add|remove)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*",
+      "[\"'`]([^\"'`]*)[\"'`]"
+    ]
+  ]
 }
 ```
