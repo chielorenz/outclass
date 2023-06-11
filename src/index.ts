@@ -1,46 +1,61 @@
-namespace Stype {
-  export type Value = string | undefined | null | boolean;
+export type Value = string | undefined | null | boolean;
 
-  export type Object = {
-    [key: string]: Value | List | Object;
-  };
+export type Item = Value | List;
 
-  export type List = Array<Value | List | Object>;
+export type List = Array<Item>;
+
+export type Action = {
+  type: "add" | "remove" | "set";
+  tokens: Set<string>;
+};
+
+export type Patch = {
+  type: "patch";
+  actions: Action[];
+};
+
+export type ConfigMap = {
+  add: List;
+  remove: List;
+  set: List;
+  patch: Patch | Patch[];
+};
+
+function isList(item: any): item is List {
+  return Object.prototype.toString.call(item) === "[object Array]";
 }
 
-function isArray(item: unknown): item is Stype.List {
-  return item instanceof Array;
+function isString(item: any): item is string {
+  return Object.prototype.toString.call(item) === "[object String]";
 }
 
-function isObject(item: unknown): item is Stype.Object {
-  return Object.prototype.toString.call(item) === "[object Object]";
+function isPatchArray(item: any): item is Patch[] {
+  let isPatchArray = false;
+  if (item instanceof Array) {
+    isPatchArray = true;
+    for (const pacth of item) {
+      isPatchArray = isPatchArray && pacth?.type === "patch";
+    }
+  }
+
+  return isPatchArray;
 }
 
-function isString(item: unknown): item is string {
-  return typeof item === "string";
-}
-
-function isSet(item: unknown): item is Set<string> {
-  return item instanceof Set;
-}
-
-function parse(...params: Stype.List): Set<string> {
+function parse(...params: List): Set<string> {
   const tokens = new Set<string>();
 
-  for (const param of params) {
-    let next = new Set<string>();
-    if (isArray(param)) {
-      next = parse(...param);
-    } else if (isObject(param)) {
-      next = parse(...Object.values(param));
+  function eat(param: Item): Set<string> {
+    if (isList(param)) {
+      return parse(...param);
     } else if (isString(param)) {
-      param
-        .split(" ")
-        .filter((token) => token)
-        .forEach((token) => next.add(token));
+      return new Set(param.split(" ").filter((token) => token));
+    } else {
+      return new Set();
     }
+  }
 
-    for (const token of next) {
+  for (const param of params) {
+    for (const token of eat(param)) {
       tokens.add(token);
     }
   }
@@ -49,67 +64,77 @@ function parse(...params: Stype.List): Set<string> {
 }
 
 class Parser {
-  public from(...params: Stype.List): Builder {
-    return new Builder(params);
+  public parse(...params: List): string {
+    return [...parse(params)].join(" ");
   }
 
-  public parse(...params: Stype.List): string {
-    return this.from(params).parse();
+  get layer(): Layer {
+    return new Layer();
   }
 }
 
-class Builder {
-  private tokens = new Map<number | string, string | Set<string>>();
+class Layer {
+  private actions: Action[] = [];
+  private patches: Patch[] = [];
 
-  constructor(...params: Stype.List) {
-    this.add(params);
-  }
-
-  public add(...params: Stype.List): Builder {
-    for (const token of parse(params)) {
-      this.tokens.set(this.tokens.size + 1, token);
-    }
+  public add(...params: List): Layer {
+    this.actions.push({ type: "add", tokens: parse(params) });
     return this;
   }
 
-  public remove(...params: Stype.List): Builder {
-    for (const token of parse(params)) {
-      for (const [key, value] of this.tokens.entries()) {
-        if (token === value) {
-          this.tokens.delete(key);
-          break;
-        }
-      }
-    }
+  public remove(...params: List): Layer {
+    this.actions.push({ type: "remove", tokens: parse(params) });
     return this;
   }
 
-  public set(key: string, ...params: Stype.List): Builder {
-    this.tokens.set(key, parse(params));
+  public set(...params: List): Layer {
+    this.actions.push({ type: "set", tokens: parse(params) });
     return this;
   }
 
-  public delete(key: string): Builder {
-    this.tokens.delete(key);
+  public apply(...patches: Patch[]): Layer {
+    this.patches.push(...patches);
     return this;
   }
 
-  public parse(): string {
-    let classes = new Set<string>();
-    for (const token of this.tokens.values()) {
-      if (isSet(token)) {
-        for (const value of token) {
-          classes.add(value);
-        }
+  public with(actions: ConfigMap): Layer {
+    let type: keyof ConfigMap;
+    for (type in actions) {
+      if (type === "patch") {
+        const patch = actions[type];
+        isPatchArray(patch) ? this.apply(...patch) : this.apply(patch);
       } else {
-        classes.add(token);
+        const tokens = parse(actions[type]);
+        this.actions.push({ type, tokens });
+      }
+    }
+    return this;
+  }
+
+  get patch(): Patch {
+    return { type: "patch", actions: this.actions };
+  }
+
+  public parse(actions: ConfigMap): string {
+    this.with(actions);
+    let tokens = new Set<string>();
+
+    function eat(action: Action) {
+      if (action.type === "add") {
+        action.tokens.forEach((token) => tokens.add(token));
+      } else if (action.type === "remove") {
+        action.tokens.forEach((token) => tokens.delete(token));
+      } else if (action.type === "set") {
+        tokens = action.tokens;
       }
     }
 
-    return [...classes].join(" ");
+    this.actions.forEach(eat);
+    this.patches.forEach((patch) => patch.actions.forEach(eat));
+
+    return [...tokens].join(" ");
   }
 }
 
-const stype = new Parser();
-export { stype as s };
-export default stype;
+const s = new Parser();
+export { s };
