@@ -20,7 +20,7 @@ slots.set("spacing", "m-4").set("sizing", "w-8").parse();
 // output: "p-2 w-8"
 ```
 
-At its core is a set of utilities for dynamically creating, updating and extending class strings. It is especially useful when used with atomic or utility-first CSS frameworks like TailwindCSS and UnoCSS.
+At its core is a set of utilities for dynamically building, updating and extending class strings. It is especially useful when used with atomic or utility-first CSS frameworks like TailwindCSS and UnoCSS.
 
 You can try an interactive demo on [CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/stype-demo?file=app%2Fpage.tsx).
 
@@ -29,15 +29,15 @@ You can try an interactive demo on [CodeSandbox](https://codesandbox.io/p/sandbo
 - Fully typed
 - Framework agnostic
 - Zero dependencies
-- Lightweight: < 1kB (min + brotli)
-- Fast: see the [benchmark](/benchmark) folder
+  <!-- - Lightweight: < 1kB (min + brotli) -->
+  <!-- - Fast: see the [benchmark](/benchmark) folder -->
 
 ## Intallation
 
 ### Node
 
 ```bash
-npm  add github:b1n01/outclass
+npm add github:b1n01/outclass
 yarn add github:b1n01/outclass
 pnpm add github:b1n01/outclass
 ```
@@ -56,7 +56,39 @@ bun add github:b1n01/outclass
 
 ## Documentation
 
-### Parser
+### Parsing
+
+The `parse` method takes various inputs and returns a string of classes.
+
+It can takes strings, arrays of strings, nested arrays of strings, null, undefined and boolean values and returns string that contains unique classes: in case of repeated values only the first instance is considered, other values keep the insertion order.
+
+```ts
+import { out } from "outclass";
+
+// From a space-separated list of classes
+out.parse("flex flex-col");
+// flex flex-col
+
+// From multiple parameters
+out.parse("p-2 m-2", "rounded");
+// p-2 m-2 rounded
+
+// From arrays
+out.parse("flex rounded", ["p-2", "m-2"]);
+// flex rounded p-2 m-2
+
+// From nested arrays
+out.parse(["flex", ["p-2", "m-2"]]);
+// flex p-2 m-2
+
+// With repeted values
+out.parse("flex", "rounded", "flex");
+// flex rounded
+
+// It handles nulls and boolean values
+out.parse(isActive ? "cursor-pointer" : null, !isDirty && "border-2");
+// cursor-pointer border-2
+```
 
 ### Layers
 
