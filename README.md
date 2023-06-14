@@ -5,7 +5,7 @@ A tool for creating class strings. A quick example:
 ```ts
 import { out } from "outclass";
 
-// Dinamically create a string of classes
+// Dynamically create a string of classes
 out.parse("flex flex-col", isRound ? "rounded" : null);
 // output: "flex flex-col rounded"
 
@@ -81,7 +81,7 @@ out.parse("flex rounded", ["p-2", "m-2"]);
 out.parse(["flex", ["p-2", "m-2"]]);
 // flex p-2 m-2
 
-// With repeted values
+// With repeated values
 out.parse("flex", "rounded", "flex");
 // flex rounded
 
@@ -94,7 +94,7 @@ out.parse(isActive ? "cursor-pointer" : null, !isDirty && "border-2");
 
 Using `out.layer` you get a **layer** object. A layer offers methods to build a string of classes interactively, use `layer.add()` to add classes, `layer.remove()` to remove classes and `layer.set()` to override all existing classes with some new ones. This methods accept the same input as `out.parse()`.
 
-Leyers follows the builder pattern, this means that each method returns the builder itsels so yuou can chain together multiple method calls.
+Layers follows the builder pattern, this means that each method returns the builder itself so you can chain together multiple method calls.
 
 Once you have finished building your string you can call the `layer.parse()` method to get back the resulting string of classes.
 
@@ -105,12 +105,12 @@ const layer = out.layer.set("flex flex-col rounded");
 layer.add("p-2 m-2").remove("rounded").parse();
 // flex flex-col p-2 m-2
 
-const classes = [isActive ? "bg-violet-600" : null, "p-2"]
-out.layer.set("flex", classes).add("m-2")parse();
+const classes = [isActive ? "bg-violet-600" : null, "p-2"];
+out.layer.set("flex", classes).add("m-2").parse();
 // flex bg-violet-600 p-2 m-2
 ```
 
-Layers are patchable, this means that a layer can be applyed to another layer. A layer can be converted to a **patch** by using `layer.patch` getter. The returned patch can be applyed to another layer using `layer.apply()`. The patch layer is applyed after the main layer.
+Layers are patchable, this means that a layer can be applied to another layer. A layer can be converted to a **patch** by using `layer.patch` getter. The returned patch can be applied to another layer using `layer.apply()`. The patch layer is applied after the main layer.
 
 ```ts
 import { out } from "outclass";
@@ -120,7 +120,7 @@ out.layer.set("flex p-2").apply(patch).parse();
 // flex p-4
 ```
 
-Patch are usefoul to customize a component:
+Patch are useful to customize a component, an example:
 
 ```tsx
 import { out, type Patch } from "outclass";
@@ -140,7 +140,23 @@ export default function Main() {
 // <button class="flex m-2 rounded" />
 ```
 
-### Slots
+Layers also accept a **configuration object**, which are objects with `set`, `add`, `remove` and `patch` keys and as values the same arguments `out.parse()` does. A configuration object can be used with the `layer.with()` method and with the `layer.parse()` method, with the difference that the first follows the builder pattern and returns itself the second returns the parsed string.
+
+```ts
+import { out } from "outclass";
+
+const layer = out.layer.with({
+  set: "flex",
+  add: ["flex-col p-2", isActive ? "bg-violet-600" : null],
+  remove: "p-2",
+  patch: out.layer.add("p-4").patch,
+});
+
+layer.parse();
+// flex flex-col bg-violet-600 p-4
+```
+
+<!-- ### Slots -->
 
 ## Integrations
 
