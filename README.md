@@ -58,9 +58,9 @@ bun add github:b1n01/outclass
 
 ### Parsing
 
-The `parse` method takes various inputs and returns a string of classes.
+The `out.parse()` method takes various inputs and returns a string of classes.
 
-It can takes strings, arrays of strings, nested arrays of strings, null, undefined and boolean values and returns string that contains unique classes: in case of repeated values only the first instance is considered, other values keep the insertion order.
+It can take strings, arrays of strings, nested arrays of strings, null, undefined and boolean values and returns a string that contains unique classes: in case of repeated values only the first instance is considered, other values keep the insertion order.
 
 ```ts
 import { out } from "outclass";
@@ -91,6 +91,54 @@ out.parse(isActive ? "cursor-pointer" : null, !isDirty && "border-2");
 ```
 
 ### Layers
+
+Using `out.layer` you get a **layer** object. A layer offers methods to build a string of classes interactively, use `layer.add()` to add classes, `layer.remove()` to remove classes and `layer.set()` to override all existing classes with some new ones. This methods accept the same input as `out.parse()`.
+
+Leyers follows the builder pattern, this means that each method returns the builder itsels so yuou can chain together multiple method calls.
+
+Once you have finished building your string you can call the `layer.parse()` method to get back the resulting string of classes.
+
+```ts
+import { out } from "outclass";
+
+const layer = out.layer.set("flex flex-col rounded");
+layer.add("p-2 m-2").remove("rounded").parse();
+// flex flex-col p-2 m-2
+
+const classes = [isActive ? "bg-violet-600" : null, "p-2"]
+out.layer.set("flex", classes).add("m-2")parse();
+// flex bg-violet-600 p-2 m-2
+```
+
+Layers are patchable, this means that a layer can be applyed to another layer. A layer can be converted to a **patch** by using `layer.patch` getter. The returned patch can be applyed to another layer using `layer.apply()`. The patch layer is applyed after the main layer.
+
+```ts
+import { out } from "outclass";
+
+const patch = out.layer.remove("p-2").add("p-4").patch;
+out.layer.set("flex p-2").apply(patch).parse();
+// flex p-4
+```
+
+Patch are usefoul to customize a component:
+
+```tsx
+import { out, type Patch } from "outclass";
+
+function Button({ patch }: { patch: Patch }) {
+  const style = out.layer.set("flex m-2 p-2").apply(patch);
+
+  return <button className={style.parse()} />;
+}
+
+export default function Main() {
+  const patch = out.layer.add("rounded").remove("p-2").patch;
+
+  return <Button patch={patch} />;
+}
+
+// <button class="flex m-2 rounded" />
+```
 
 ### Slots
 
