@@ -1,17 +1,17 @@
 # Outclass
 
-A tool for creating class strings. A quick example:
+Outclass is a class string manipulation tool. It offers a set of utility for creating, editing and extending class strings. It is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS and UnoCSS. A quick example:
 
 ```ts
 import { out } from "outclass";
 
-// Dynamically create a string of classes
-out.parse("flex flex-col", isRound ? "rounded" : null);
-// output: "flex flex-col rounded"
+// Dynamically create a class string
+out.parse("flex flex-col", isRound && "rounded");
+// output: "flex flex-col rounded", if isRound is true
 
 // Using "patchable layers"
-const patch = out.layer.add("p-2").remove("flex").patch;
-out.layer.add("flex m-4").apply(patch).parse();
+const layer = out.layer.add("p-2").remove("flex");
+out.layer.add("flex m-4").apply(layer.patch).parse();
 // output: "m-4 p-2"
 
 // Using "write-once slots"
@@ -20,24 +20,22 @@ slots.set("spacing", "m-4").set("sizing", "w-8").parse();
 // output: "p-2 w-8"
 ```
 
-At its core is a set of utilities for dynamically building, updating and extending class strings. It is especially useful when used with atomic or utility-first CSS frameworks like TailwindCSS and UnoCSS.
-
-You can try an interactive demo on [CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/stype-demo?file=app%2Fpage.tsx).
+You can go on and read the [documentation](#documentation) or try the interactive demo on [CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/stype-demo?file=app%2Fpage.tsx).
 
 ## Features
 
-- Fully typed
-- Framework agnostic
-- Zero dependencies
-  <!-- - Lightweight: < 1kB (min + brotli) -->
-  <!-- - Fast: see the [benchmark](/benchmark) folder -->
+- 🔤 Fully typed
+- 🏳️‍🌈 Framework agnostic
+- ✊ Zero dependencies
+- 🪶 Lightweight: less than 1KB (minified + gzipped)
+- ⚡ Fast: see the [benchmark](/benchmark) folder
 
-## Intallation
+## Installation
 
 ### Node
 
 ```bash
-npm add github:b1n01/outclass
+npm  add github:b1n01/outclass
 yarn add github:b1n01/outclass
 pnpm add github:b1n01/outclass
 ```
@@ -56,41 +54,62 @@ bun add github:b1n01/outclass
 
 ## Documentation
 
-### Parsing
+Outclass is composed by three main components:
 
-The `out.parse()` method takes various inputs and returns a string of classes.
+- A **parser**, that "eats" string inputs and returns the computed class string
+- A patchable **layer** system that can build and patch "layers" of classes
+- Write-once **slots**, a mechanism to write immutable classes
 
-It can take strings, arrays of strings, nested arrays of strings, null, undefined and boolean values and returns a string that contains unique classes: in case of repeated values only the first instance is considered, other values keep the insertion order.
+All components are exposed by the `out` object that can be imported from `outclass`:
 
 ```ts
 import { out } from "outclass";
 
-// From a space-separated list of classes
-out.parse("flex flex-col");
-// flex flex-col
+// Use the parser
+out.parse();
 
-// From multiple parameters
-out.parse("p-2 m-2", "rounded");
-// p-2 m-2 rounded
+// Get a layer
+const layer = out.layer;
 
-// From arrays
-out.parse("flex rounded", ["p-2", "m-2"]);
-// flex rounded p-2 m-2
+// Get write-once slots
+const slots = out.slots;
+```
 
-// From nested arrays
-out.parse(["flex", ["p-2", "m-2"]]);
-// flex p-2 m-2
+### Parser
 
-// With repeated values
+The parser is a single function that takes any number of strings, arrays of strings, null or boolean values and returns a string containing a unique list of classes, sorted by their insertion orders. In case duplicate values are given as input, only the first occurrence is kept.
+
+The parser function exposed via `out.parse()`.
+
+```ts
+import { out } from "outclass";
+
+// Always returns a string
+out.parse();
+// ""
+
+// Takes any number of strings
+out.parse("flex", "p-2 m-2", "rounded");
+// flex p-2 m-2 rounded
+
+// Arrays and nested arrays
+out.parse(["flex-col", ["w-24", "pt-6"]]);
+// flex-col w-24 pt-6
+
+// First occurrence is kept
 out.parse("flex", "rounded", "flex");
 // flex rounded
 
-// It handles nulls and boolean values
-out.parse(isActive ? "cursor-pointer" : null, !isDirty && "border-2");
-// cursor-pointer border-2
+// Null, undefined and boolean values are handled
+out.parse([
+  isRound ? "rounded" : undefined,
+  isActive ? "cursor-pointer" : null,
+  isDirty && "p-2 m-2",
+]);
+// rounded cursor-pointer p-2 m-2, if isRound, isActive and isDirty are true
 ```
 
-### Layers
+### Layer
 
 Using `out.layer` you get a **layer** object. A layer offers methods to build a string of classes interactively, use `layer.add()` to add classes, `layer.remove()` to remove classes and `layer.set()` to override all existing classes with some new ones. This methods accept the same input as `out.parse()`.
 
