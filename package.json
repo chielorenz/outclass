@@ -1,7 +1,7 @@
 {
-  "name": "stype",
+  "name": "outclass",
   "version": "0.1.0",
-  "description": "Tool for the dynamic creation of CSS classess",
+  "description": "A class string manipulation tool",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
@@ -13,7 +13,12 @@
     "build": "tsc",
     "test": "jest"
   },
-  "keywords": [],
+  "keywords": [
+    "class",
+    "className",
+    "atomic css",
+    "utility-first css"
+  ],
   "author": "b1n01",
   "license": "MIT",
   "devDependencies": {
