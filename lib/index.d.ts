@@ -15,9 +15,13 @@ export type ConfigMap = {
     set: List;
     patch: Patch | Patch[];
 };
+export type SlotConfigMap = {
+    [key: string]: Item;
+};
 declare class Parser {
     parse(...params: List): string;
     get layer(): Layer;
+    get slot(): Slot;
 }
 declare class Layer {
     private actions;
@@ -28,7 +32,13 @@ declare class Layer {
     apply(...patches: Patch[]): Layer;
     with(actions: ConfigMap): Layer;
     get patch(): Patch;
-    parse(actions: ConfigMap): string;
+    parse(actions?: ConfigMap): string;
 }
-declare const s: Parser;
-export { s };
+declare class Slot {
+    private slots;
+    set(key: string, ...params: List): Slot;
+    with(config: SlotConfigMap): Slot;
+    parse(config?: SlotConfigMap): string;
+}
+declare const out: Parser;
+export { out };
