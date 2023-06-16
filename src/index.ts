@@ -33,8 +33,8 @@ function isPatchArray(item: any): item is Patch[] {
   let isPatchArray = false;
   if (item instanceof Array) {
     isPatchArray = true;
-    for (const pacth of item) {
-      isPatchArray = isPatchArray && pacth?.type === "patch";
+    for (const patch of item) {
+      isPatchArray = isPatchArray && patch?.type === "patch";
     }
   }
 
