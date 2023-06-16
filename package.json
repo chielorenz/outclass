@@ -30,7 +30,11 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text"
+    ]
   },
   "nodemonConfig": {
     "ext": "ts",
