@@ -136,5 +136,5 @@ class Layer {
   }
 }
 
-const s = new Parser();
-export { s };
+const out = new Parser();
+export { out };
