@@ -21,6 +21,10 @@ export type ConfigMap = {
   patch: Patch | Patch[];
 };
 
+export type SlotConfigMap = {
+  [key: string]: Item;
+};
+
 function isList(item: any): item is List {
   return Object.prototype.toString.call(item) === "[object Array]";
 }
@@ -71,6 +75,10 @@ class Parser {
   get layer(): Layer {
     return new Layer();
   }
+
+  get slot(): Slot {
+    return new Slot();
+  }
 }
 
 class Layer {
@@ -115,8 +123,8 @@ class Layer {
     return { type: "patch", actions: this.actions };
   }
 
-  public parse(actions: ConfigMap): string {
-    this.with(actions);
+  public parse(actions?: ConfigMap): string {
+    if (actions) this.with(actions);
     let tokens = new Set<string>();
 
     function eat(action: Action) {
@@ -133,6 +141,29 @@ class Layer {
     this.patches.forEach((patch) => patch.actions.forEach(eat));
 
     return [...tokens].join(" ");
+  }
+}
+
+class Slot {
+  private slots = new Map<string, string>();
+
+  public set(key: string, ...params: List): Slot {
+    if (!this.slots.has(key)) {
+      this.slots.set(key, out.parse(params));
+    }
+    return this;
+  }
+
+  public with(config: SlotConfigMap): Slot {
+    for (const [key, values] of Object.entries(config)) {
+      this.set(key, values);
+    }
+    return this;
+  }
+
+  public parse(config?: SlotConfigMap): string {
+    if (config) this.with(config);
+    return [...this.slots.values()].join(" ");
   }
 }
 
