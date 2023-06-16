@@ -27,7 +27,7 @@ You can go on and read the [documentation](#documentation) or try the interactiv
 - Fully typed
 - Framework agnostic
 - Zero dependencies
-- Lightweight: less than 1KB (minified + gzipped)
+- Lightweight: less than 1KB (minified + zipped)
   <!-- - Fully tested -->
   <!-- - Fast: see the [benchmark](/benchmark) folder -->
 
@@ -171,7 +171,7 @@ function Button({ patch }: { patch: Patch }) {
 export default function Main() {
   const buttonStyle = out.layer.add("rounded").remove("p-2");
 
-  return <Button style={buttonStyle.patch} />;
+  return <Button patch={buttonStyle.patch} />;
 }
 
 // <button class="flex m-2 rounded" />
@@ -230,7 +230,7 @@ function Button({ slot }: { slot: Slot }) {
 export default function Main() {
   const buttonStyle = out.slot.set("spacing", "m-4 p-4");
 
-  return <Button style={buttonStyle} />;
+  return <Button slot={buttonStyle} />;
 }
 
 // <button class="m-4 p-4 w-32 h-32" />
