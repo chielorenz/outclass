@@ -25,14 +25,6 @@ export type SlotConfigMap = {
   [key: string]: Item;
 };
 
-function isList(item: any): item is List {
-  return Object.prototype.toString.call(item) === "[object Array]";
-}
-
-function isString(item: any): item is string {
-  return Object.prototype.toString.call(item) === "[object String]";
-}
-
 function isPatchArray(item: any): item is Patch[] {
   let isPatchArray = false;
   if (item instanceof Array) {
@@ -48,13 +40,13 @@ function isPatchArray(item: any): item is Patch[] {
 function parse(...params: List): Set<string> {
   const tokens = new Set<string>();
 
-  function eat(param: Item): Set<string> {
-    if (isList(param)) {
+  function eat(param: Item): Iterable<string> {
+    if (param instanceof Array) {
       return parse(...param);
-    } else if (isString(param)) {
-      return new Set(param.split(" ").filter((token) => token));
+    } else if (typeof param === "string") {
+      return param.split(" ");
     } else {
-      return new Set();
+      return [];
     }
   }
 
