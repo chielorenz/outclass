@@ -1,24 +1,21 @@
 {
-    "timestamp": {
-        "now": "2023-06-17T12:06:05.947Z"
-    },
-    "system": {
-        "node": "19.3.0",
-        "v8": "10.8.168.21-node.8",
-        "arc": "arm64",
-        "platform": "darwin",
-        "release": "22.5.0",
-        "mem": 17179869184,
-        "cpu": "Apple M1 Pro",
-        "cores": 10
-    },
-    "package": {
-        "name": "outclass",
-        "version": "0.1.0"
-    },
-    "benchmark": {
-        "Parsed tokens": 1000000,
-        "Execution time (ms)": 90.54962500184774,
-        "Heap used (MB)": 19.797531127929688
-    }
+  "system": {
+    "node": "19.3.0",
+    "v8": "10.8.168.21-node.8",
+    "arc": "arm64",
+    "platform": "darwin",
+    "release": "22.5.0",
+    "mem": 17179869184,
+    "cpu": "Apple M1 Pro",
+    "cores": 10
+  },
+  "package": {
+    "name": "outclass",
+    "version": "0.1.0"
+  },
+  "benchmark": {
+    "Parsed tokens": 1000000,
+    "Execution time (ms)": 91.34474999457598,
+    "Heap used (MB)": 20.074172973632812
+  }
 }

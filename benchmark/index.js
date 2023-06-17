@@ -10,7 +10,6 @@ const elapsedTime = performance.now() - start;
 const usedMemory = process.memoryUsage().heapUsed / 1024 / 1024;
 
 const data = {
-  timestamp: { now: new Date().toISOString() },
   system: {
     node: process.versions.node,
     v8: process.versions.v8,
@@ -34,7 +33,7 @@ const data = {
 
 fs.writeFileSync(
   new URL("results.json", import.meta.url),
-  JSON.stringify(data, null, 4)
+  JSON.stringify(data, null, 2)
 );
 
 for (const [type, values] of Object.entries(data)) {

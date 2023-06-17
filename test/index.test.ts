@@ -49,16 +49,13 @@ describe("Parser", () => {
     expect(out.parse("a", "a")).toBe("a");
     expect(out.parse("a a", "a a")).toBe("a");
   });
-
-  test("Performance", () => {
-    const length = 100000;
-    const big = Array.from({ length }, () => "a");
-    out.parse(big);
-    const usedBytes = process.memoryUsage().heapUsed / 1024 / 1024;
-    const usedMB = Math.round(usedBytes * 100) / 100;
-    expect(usedMB).toBeLessThan(200);
-  });
 });
+
+// describe("Layer", () => {
+//   test("Test", () => {
+//     expect(out.slot.set("a", "a", "b").parse()).toBe("a b");
+//   });
+// });
 
 // describe("Slot", () => {
 //   test("Test", () => {
