@@ -24,12 +24,11 @@ You can go on and read the [documentation](#documentation) or try the interactiv
 
 ## Features
 
+- Zero dependencies
 - Fully typed
 - Framework agnostic
-- Zero dependencies
-- Lightweight: less than 1KB (minified + zipped)
-  <!-- - Fully tested -->
-  <!-- - Fast: see the [benchmark](/benchmark) folder -->
+- Tiny: < 1KB minified + zipped
+- Fast: 1M tokens < 100ms, see [benchmark](/benchmark/results.json)
 
 ## Installation
 
@@ -267,3 +266,5 @@ To enable TailwindCSS IntelliSense on Outclass methods calls, add this regex to 
   ]
 }
 ```
+
+<!-- ## Contributing -->
