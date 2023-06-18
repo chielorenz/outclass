@@ -52,7 +52,7 @@ function parse(...params: List): Set<string> {
 
   for (const param of params) {
     for (const token of eat(param)) {
-      tokens.add(token);
+      if (token) tokens.add(token);
     }
   }
 
