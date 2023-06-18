@@ -25,18 +25,6 @@ export type SlotMap = {
   [key: string]: Item;
 };
 
-function isPatchArray(item: any): item is Patch[] {
-  let isPatchArray = false;
-  if (item instanceof Array) {
-    isPatchArray = true;
-    for (const patch of item) {
-      isPatchArray = isPatchArray && patch?.type === "patch";
-    }
-  }
-
-  return isPatchArray;
-}
-
 function parse(...params: List): Set<string> {
   const tokens = new Set<string>();
 
