@@ -15,10 +15,10 @@ export type Patch = {
 };
 
 export type LayerMap = {
-  add: List;
-  remove: List;
-  set: List;
-  patch: Patch | Patch[];
+  add?: Item;
+  remove?: Item;
+  set?: Item;
+  patch?: Patch | Patch[];
 };
 
 export type SlotMap = {
@@ -90,7 +90,7 @@ class Layer {
     for (type in actions) {
       if (type === "patch") {
         const patch = actions[type];
-        "type" in patch ? this.apply(patch) : this.apply(...patch);
+        if (patch) "type" in patch ? this.apply(patch) : this.apply(...patch);
       } else {
         const tokens = parse(actions[type]);
         this.actions.push({ type, tokens });
