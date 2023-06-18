@@ -12,7 +12,7 @@
     "dev": "nodemon",
     "build": "tsc",
     "test": "jest",
-    "benchmark": "node --stack-size=8192 benchmark/index.js"
+    "benchmarks": "node --stack-size=8192 benchmarks/node.js"
   },
   "keywords": [
     "class",
