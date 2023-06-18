@@ -25,10 +25,11 @@ You can go on and read the [documentation](#documentation) or try the interactiv
 ## Features
 
 - Zero dependencies
-- Fully typed
 - Framework agnostic
+- Fully typed
 - Tiny: < 1KB minified + zipped
-- Fast: 1M tokens < 100ms, see [benchmark](/benchmark/results.json)
+- Fast: 1M tokens < 100ms
+- Fully tested
 
 ## Installation
 
