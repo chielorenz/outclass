@@ -14,14 +14,14 @@ export type Patch = {
   actions: Action[];
 };
 
-export type ConfigMap = {
+export type LayerMap = {
   add: List;
   remove: List;
   set: List;
   patch: Patch | Patch[];
 };
 
-export type SlotConfigMap = {
+export type SlotMap = {
   [key: string]: Item;
 };
 
@@ -97,8 +97,8 @@ class Layer {
     return this;
   }
 
-  public with(actions: ConfigMap): Layer {
-    let type: keyof ConfigMap;
+  public with(actions: LayerMap): Layer {
+    let type: keyof LayerMap;
     for (type in actions) {
       if (type === "patch") {
         const patch = actions[type];
@@ -115,7 +115,7 @@ class Layer {
     return { type: "patch", actions: this.actions };
   }
 
-  public parse(actions?: ConfigMap): string {
+  public parse(actions?: LayerMap): string {
     if (actions) this.with(actions);
     let tokens = new Set<string>();
 
@@ -146,14 +146,14 @@ class Slot {
     return this;
   }
 
-  public with(config: SlotConfigMap): Slot {
+  public with(config: SlotMap): Slot {
     for (const [key, values] of Object.entries(config)) {
       this.set(key, values);
     }
     return this;
   }
 
-  public parse(config?: SlotConfigMap): string {
+  public parse(config?: SlotMap): string {
     if (config) this.with(config);
     return [...this.slots.values()].join(" ");
   }
