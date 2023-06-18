@@ -102,7 +102,7 @@ class Layer {
     for (type in actions) {
       if (type === "patch") {
         const patch = actions[type];
-        isPatchArray(patch) ? this.apply(...patch) : this.apply(patch);
+        "type" in patch ? this.apply(patch) : this.apply(...patch);
       } else {
         const tokens = parse(actions[type]);
         this.actions.push({ type, tokens });
