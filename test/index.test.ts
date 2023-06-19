@@ -109,30 +109,3 @@ describe("Layer", () => {
     expect(out.layer.parse(map)).toBe("");
   });
 });
-
-describe("Slot", () => {
-  test("Empty", () => {
-    expect(out.slot.set("a").parse()).toBe("");
-    expect(out.slot.with({ a: "" }).parse()).toBe("");
-    expect(out.slot.parse()).toBe("");
-  });
-
-  test("Set", () => {
-    expect(out.slot.set("a", "a").parse()).toBe("a");
-    expect(out.slot.set("a", "a b").parse()).toBe("a b");
-    expect(out.slot.set("a", "a", "b").parse()).toBe("a b");
-    expect(out.slot.set("a", "a").set("b", "b").parse()).toBe("a b");
-    expect(out.slot.set("a", "a").set("a", "b").parse()).toBe("a");
-  });
-
-  test("With", () => {
-    expect(out.slot.with({ a: "a" }).parse()).toBe("a");
-    expect(out.slot.with({ a: "a", b: "b" }).parse()).toBe("a b");
-    expect(out.slot.with({ a: "a" }).with({ a: "b" }).parse()).toBe("a");
-  });
-
-  test("Parse", () => {
-    expect(out.slot.parse({ a: "a" })).toBe("a");
-    expect(out.slot.parse({ a: "a", b: "b" })).toBe("a b");
-  });
-});

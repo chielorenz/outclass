@@ -13,11 +13,6 @@ out.parse("flex flex-col", isRound && "rounded");
 const layer = out.layer.add("p-2").remove("flex");
 out.layer.add("flex m-4").apply(layer.patch).parse();
 // output: "m-4 p-2"
-
-// Using a "write-once slot"
-const slot = out.slot.set("spacing", "p-2");
-slot.set("spacing", "m-4").set("sizing", "w-8").parse();
-// output: "p-2 w-8"
 ```
 
 You can go on and read the [documentation](#documentation) or try the interactive demo on [CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/stype-demo?file=app%2Fpage.tsx).
@@ -59,7 +54,6 @@ Outclass is composed by three main components:
 
 - A **parser**, that takes string inputs and returns the computed classes as string
 - A patchable **layer** system that can build and patch "layers" of classes
-- Write-once **slot** system, a mechanism to write immutable classes
 
 All components are exposed by the _out_ object that can be imported from _outclass_:
 
@@ -71,9 +65,6 @@ out.parse();
 
 // Get a layer
 const layer = out.layer;
-
-// Get write-once slot
-const slot = out.slot;
 ```
 
 ### Parser
@@ -197,57 +188,6 @@ const layer = out.layer.parse({
 });
 
 // flex rounded border-2 p-4
-```
-
-### Slot
-
-The slot system is a "write-once" key-value pair: once a certain key of a slot is written, all followings writing of the same key are ignored.
-
-Slot key can be set with the `slot.set()` method, that takes the key of the slot as first argument and any number of input as the value of the slot. The values that `slot.set()` accepts are the same that `out.parse()` takes. To get the computed string of classes use the `slot.parse()` method.
-
-You can create a new slot using the `out.slot` getter method.
-
-```ts
-import { out } from "outclass";
-
-out.slot.set("spacing", "p-2 m-2").set("spacing", "p-8 m-8").parse();
-// p-2 m-2
-```
-
-A slot is useful when you want to offer a customizable interface, by exposing only to a certain sets of values, called precisely "slots".
-
-A child component can expose a _spacing_ and a _sizing_ slot, which can be customized by a parent component by passing a pre-populated slot as argument. The child component can use other classes other than those exposed by the two slots but keep them private.
-
-```tsx
-import { out, type Slot } from "outclass";
-
-function Button({ slot }: { slot: Slot }) {
-  slot.set("spacing", "m-2 p-2").set("sizing", "w-32 h-32");
-
-  return <button className={slot.parse()} />;
-}
-
-export default function Main() {
-  const buttonStyle = out.slot.set("spacing", "m-4 p-4");
-
-  return <Button slot={buttonStyle} />;
-}
-
-// <button class="m-4 p-4 w-32 h-32" />
-```
-
-Slots keys can be set using a **configuration object**:
-
-```ts
-import { out } from "outclass";
-
-const slot = out.slot.with({
-  spacing: "p-2 m-2",
-  sizing: "h-8 w-8",
-});
-
-slot.parse();
-// p-2 m-2 h-8 w-8
 ```
 
 ## Integrations
