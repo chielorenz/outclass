@@ -2,9 +2,6 @@ export type Value = string | undefined | null | boolean;
 
 export type Item = Value | Array<Item>;
 
-// Should a list be an array of (items or layerMap)?
-// export type List = Array<Item>;
-
 export type Action = {
   type: "add" | "remove" | "set";
   items: Item;
@@ -15,7 +12,7 @@ export type Patch = {
   actions: Action[];
 };
 
-export type LayerMap = {
+export type Map = {
   set?: Item;
   add?: Item;
   remove?: Item;
@@ -60,11 +57,11 @@ class Outclass {
     );
   }
 
-  private parseMap(map: LayerMap): { actions: Action[]; patches: Patch[] } {
+  private parseMap(map: Map): [actions: Action[], patches: Patch[]] {
     let actions: Action[] = [];
     let patches: Patch[] = [];
 
-    let type: keyof LayerMap;
+    let type: keyof Map;
     for (type in map) {
       if (type === "patch") {
         const patch = map[type];
@@ -76,7 +73,7 @@ class Outclass {
       }
     }
 
-    return { actions, patches };
+    return [actions, patches];
   }
 
   public add(...items: Item[]): Outclass {
@@ -95,20 +92,19 @@ class Outclass {
     return this.mitosis([], patches);
   }
 
-  public with(map: LayerMap): Outclass {
-    const { actions, patches } = this.parseMap(map);
-    return this.mitosis(actions, patches);
+  public with(map: Map): Outclass {
+    return this.mitosis(...this.parseMap(map));
   }
 
-  public parse(map?: LayerMap): string {
+  public parse(map?: Map): string {
     let tokens = new Set<string>();
     const actions = [...this.actions];
     const patches = [...this.patches];
 
     if (map) {
-      const parsedMap = this.parseMap(map);
-      actions.push(...parsedMap.actions);
-      patches.push(...parsedMap.patches);
+      const [mapActions, mapPatches] = this.parseMap(map);
+      actions.push(...mapActions);
+      patches.push(...mapPatches);
     }
 
     function eat(action: Action) {
@@ -128,14 +124,14 @@ class Outclass {
     return [...tokens].join(" ");
   }
 
-  public patch(map?: LayerMap): Patch {
+  public patch(map?: Map): Patch {
     const actions = [...this.actions];
     const patches = [...this.patches];
 
     if (map) {
-      const parsedMap = this.parseMap(map);
-      actions.push(...parsedMap.actions);
-      patches.push(...parsedMap.patches);
+      const [mapActions, mapPatches] = this.parseMap(map);
+      actions.push(...mapActions);
+      patches.push(...mapPatches);
     }
 
     for (const patch of patches) {
