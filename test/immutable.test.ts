@@ -24,18 +24,26 @@ describe("Immutable", () => {
       out
         .add("a b", ["flex"])
         .remove("b")
-        .with({ add: "c", patch: out.add("d").patch({ add: "e" }) })
-        .apply(out.add("er br").patch(), out.remove("er").patch())
+        .with({ add: "c", apply: out.add("d", "e") })
+        .apply(out.add("er br"), out.remove("er"))
         .parse({ remove: "a" })
     ).toBe("flex c d e br");
 
     expect(out.parse({ add: "a" })).toBe("a");
     expect(
       out.parse({
-        patch: out.patch({ add: "a", patch: out.patch({ add: "b" }) }),
+        apply: out.with({ add: "a", apply: out.with({ add: "b" }) }),
       })
     ).toBe("a b");
 
-    expect(out.parse({ set: "b", patch: out.patch({ add: "a" }) })).toBe("b a");
+    expect(out.parse({ set: "b", apply: out.with({ add: "a" }) })).toBe("b a");
+
+    expect(
+      out
+        .apply(out.add("a"))
+        .add("b")
+        .with({ add: "c" })
+        .parse({ apply: out.add("d") })
+    ).toBe("b c a d");
   });
 });

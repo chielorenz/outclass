@@ -2,21 +2,22 @@ export type Value = string | undefined | null | boolean;
 
 export type Item = Value | Array<Item>;
 
-export type Action = {
-  type: "add" | "remove" | "set";
-  items: Item;
-};
-
-export type Patch = {
-  type: "patch";
-  actions: Action[];
-};
+export type Action =
+  | {
+      type: "add" | "remove" | "set";
+      items: Item;
+    }
+  | {
+      type: "apply";
+      items: Outclass;
+    };
 
 export type Map = {
   set?: Item;
   add?: Item;
   remove?: Item;
-  patch?: Patch | Patch[];
+  // TODO should we take Outclass | Outclass[] ?
+  apply?: Outclass;
 };
 
 function parse(...params: Item[]): Set<string> {
@@ -42,103 +43,87 @@ function parse(...params: Item[]): Set<string> {
 }
 
 class Outclass {
-  private actions: Action[] = [];
-  private patches: Patch[] = [];
+  #actions: Action[] = [];
 
-  public constructor(actions: Action[] = [], patches: Patch[] = []) {
-    this.actions = actions;
-    this.patches = patches;
+  #mitosis(actions: Action[] = []) {
+    return new Outclass([...this.#actions, ...actions]);
   }
 
-  private mitosis(actions: Action[] = [], patches: Patch[] = []) {
-    return new Outclass(
-      [...this.actions, ...actions],
-      [...this.patches, ...patches]
-    );
-  }
-
-  private parseMap(map: Map): [actions: Action[], patches: Patch[]] {
+  #parseMap(map: Map): Action[] {
     let actions: Action[] = [];
-    let patches: Patch[] = [];
 
     let type: keyof Map;
     for (type in map) {
-      if (type === "patch") {
-        const patch = map[type];
-        if (patch)
-          "type" in patch ? patches.push(patch) : patches.push(...patch);
+      if (type === "apply") {
+        const out = map[type];
+        if (out) actions.push({ type, items: out });
       } else {
-        const items = map[type];
-        actions.push({ type, items });
+        actions.push({ type, items: map[type] });
       }
     }
 
-    return [actions, patches];
+    return actions;
+  }
+
+  #patch(): Action[] {
+    return this.#actions;
+  }
+
+  public constructor(actions: Action[] = []) {
+    this.#actions = actions;
   }
 
   public add(...items: Item[]): Outclass {
-    return this.mitosis([{ type: "add", items }]);
+    return this.#mitosis([{ type: "add", items }]);
   }
 
   public remove(...items: Item[]): Outclass {
-    return this.mitosis([{ type: "remove", items }]);
+    return this.#mitosis([{ type: "remove", items }]);
   }
 
   public set(...items: Item[]): Outclass {
-    return this.mitosis([{ type: "set", items }]);
+    return this.#mitosis([{ type: "set", items }]);
   }
 
-  public apply(...patches: Patch[]): Outclass {
-    return this.mitosis([], patches);
+  public apply(...outs: Outclass[]): Outclass {
+    const actions: Action[] = [];
+    for (const out of outs) {
+      actions.push({ type: "apply", items: out });
+    }
+    return this.#mitosis(actions);
   }
 
   public with(map: Map): Outclass {
-    return this.mitosis(...this.parseMap(map));
+    return this.#mitosis(this.#parseMap(map));
   }
 
   public parse(map?: Map): string {
     let tokens = new Set<string>();
-    const actions = [...this.actions];
-    const patches = [...this.patches];
+    const actions = [...this.#actions];
 
     if (map) {
-      const [mapActions, mapPatches] = this.parseMap(map);
-      actions.push(...mapActions);
-      patches.push(...mapPatches);
+      actions.push(...this.#parseMap(map));
     }
 
-    function eat(action: Action) {
-      const parsed = parse(action.items);
-      if (action.type === "add") {
-        parsed.forEach((item) => tokens.add(item));
-      } else if (action.type === "remove") {
-        parsed.forEach((item) => tokens.delete(item));
-      } else if (action.type === "set") {
-        tokens = parsed;
+    while (actions.length > 0) {
+      const action = actions.shift();
+      if (action) {
+        if (action.type === "add") {
+          const parsed = parse(action.items);
+          parsed.forEach((item) => tokens.add(item));
+        } else if (action.type === "remove") {
+          const parsed = parse(action.items);
+          parsed.forEach((item) => tokens.delete(item));
+        } else if (action.type === "set") {
+          const parsed = parse(action.items);
+          tokens = parsed;
+        } else if (action.type === "apply") {
+          actions.push(...action.items.#patch());
+        }
       }
     }
 
-    actions.forEach(eat);
-    patches.forEach((patch) => patch.actions.forEach(eat));
-
     return [...tokens].join(" ");
-  }
-
-  public patch(map?: Map): Patch {
-    const actions = [...this.actions];
-    const patches = [...this.patches];
-
-    if (map) {
-      const [mapActions, mapPatches] = this.parseMap(map);
-      actions.push(...mapActions);
-      patches.push(...mapPatches);
-    }
-
-    for (const patch of patches) {
-      actions.push(...patch.actions);
-    }
-
-    return { type: "patch", actions };
   }
 }
 
