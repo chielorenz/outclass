@@ -19,23 +19,14 @@ export type Map = {
   apply?: Outclass | Outclass[];
 };
 
-function parse(...items: Items[]): Set<string> {
-  const tokens = new Set<string>();
-
-  // TODO this is not really necessary
-  function eat(param: Items): Iterable<string> {
-    if (param instanceof Array) {
-      return parse(...param);
-    } else if (typeof param === "string") {
-      return param.split(" ");
-    } else {
-      return [];
-    }
-  }
+function parse(...items: Items[]): string[] {
+  const tokens: string[] = [];
 
   for (const item of items) {
-    for (const token of eat(item)) {
-      if (token) tokens.add(token);
+    if (item instanceof Array) {
+      tokens.push(...parse(...item));
+    } else if (typeof item === "string") {
+      tokens.push(...item.split(" "));
     }
   }
 
@@ -97,6 +88,7 @@ class Outclass {
     return this.#mitosis(this.#parseMap(map));
   }
 
+  // TODO can parse take map | Items[]?
   public parse(map?: Map): string {
     let tokens = new Set<string>();
     const actions = [...this.#actions];
@@ -118,7 +110,7 @@ class Outclass {
         } else if (action.type === "remove") {
           for (const item of items) tokens.delete(item);
         } else if (action.type === "set") {
-          tokens = items;
+          tokens = new Set(items);
         }
       }
     }
