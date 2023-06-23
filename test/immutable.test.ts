@@ -37,6 +37,12 @@ describe("Immutable", () => {
     ).toBe("a b");
 
     expect(out.parse({ set: "b", apply: out.with({ add: "a" }) })).toBe("b a");
+    expect(
+      out.parse({
+        set: "b",
+        apply: [out.with({ add: "a" }), out.with({ add: "c" })],
+      })
+    ).toBe("b a c");
 
     expect(
       out

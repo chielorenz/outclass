@@ -1,30 +1,29 @@
 export type Value = string | undefined | null | boolean;
 
-export type Item = Value | Array<Item>;
+export type Items = Value | Items[];
 
 export type Action =
   | {
       type: "add" | "remove" | "set";
-      items: Item;
+      value: Items;
     }
   | {
-      // TODO items should contain a list of Actions instead of an Outclass?
       type: "apply";
-      items: Outclass;
+      value: Action[];
     };
 
 export type Map = {
-  set?: Item;
-  add?: Item;
-  remove?: Item;
-  // TODO should we take Outclass | Outclass[] ?
-  apply?: Outclass;
+  set?: Items;
+  add?: Items;
+  remove?: Items;
+  apply?: Outclass | Outclass[];
 };
 
-function parse(...params: Item[]): Set<string> {
+function parse(...items: Items[]): Set<string> {
   const tokens = new Set<string>();
 
-  function eat(param: Item): Iterable<string> {
+  // TODO this is not really necessary
+  function eat(param: Items): Iterable<string> {
     if (param instanceof Array) {
       return parse(...param);
     } else if (typeof param === "string") {
@@ -34,8 +33,8 @@ function parse(...params: Item[]): Set<string> {
     }
   }
 
-  for (const param of params) {
-    for (const token of eat(param)) {
+  for (const item of items) {
+    for (const token of eat(item)) {
       if (token) tokens.add(token);
     }
   }
@@ -57,9 +56,13 @@ class Outclass {
     let type: keyof Map;
     for (type in map) {
       if (type === "apply") {
-        if (map.apply) actions.push({ type, items: map.apply });
+        let outs = map.apply || [];
+        outs = Array.isArray(outs) ? outs : [outs];
+        for (const out of outs) {
+          actions.push({ type, value: out.#actions });
+        }
       } else {
-        actions.push({ type, items: map[type] });
+        actions.push({ type, value: map[type] });
       }
     }
 
@@ -70,22 +73,22 @@ class Outclass {
     this.#actions = actions;
   }
 
-  public add(...items: Item[]): Outclass {
-    return this.#mitosis([{ type: "add", items }]);
+  public add(...items: Items[]): Outclass {
+    return this.#mitosis([{ type: "add", value: items }]);
   }
 
-  public remove(...items: Item[]): Outclass {
-    return this.#mitosis([{ type: "remove", items }]);
+  public remove(...items: Items[]): Outclass {
+    return this.#mitosis([{ type: "remove", value: items }]);
   }
 
-  public set(...items: Item[]): Outclass {
-    return this.#mitosis([{ type: "set", items }]);
+  public set(...items: Items[]): Outclass {
+    return this.#mitosis([{ type: "set", value: items }]);
   }
 
-  public apply(...outs: Outclass[]): Outclass {
+  public apply(...patches: Outclass[]): Outclass {
     const actions: Action[] = [];
-    for (const out of outs) {
-      actions.push({ type: "apply", items: out });
+    for (const out of patches) {
+      actions.push({ type: "apply", value: out.#actions });
     }
     return this.#mitosis(actions);
   }
@@ -104,18 +107,18 @@ class Outclass {
 
     while (actions.length > 0) {
       const action = actions.shift();
-      if (action) {
+      if (!action) continue;
+
+      if (action.type === "apply") {
+        actions.push(...action.value);
+      } else {
+        const items = parse(action.value);
         if (action.type === "add") {
-          const parsed = parse(action.items);
-          parsed.forEach((item) => tokens.add(item));
+          for (const item of items) tokens.add(item);
         } else if (action.type === "remove") {
-          const parsed = parse(action.items);
-          parsed.forEach((item) => tokens.delete(item));
+          for (const item of items) tokens.delete(item);
         } else if (action.type === "set") {
-          const parsed = parse(action.items);
-          tokens = parsed;
-        } else if (action.type === "apply") {
-          actions.push(...action.items.#actions);
+          tokens = items;
         }
       }
     }
@@ -125,5 +128,4 @@ class Outclass {
 }
 
 const out = new Outclass();
-
 export { out };
