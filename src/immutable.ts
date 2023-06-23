@@ -59,23 +59,23 @@ class Outclass {
     return actions;
   }
 
-  public constructor(actions: Action[] = []) {
+  constructor(actions: Action[] = []) {
     this.#actions = actions;
   }
 
-  public add(...items: Items[]): Outclass {
+  add(...items: Items[]): Outclass {
     return this.#new([{ type: "add", value: items }]);
   }
 
-  public remove(...items: Items[]): Outclass {
+  remove(...items: Items[]): Outclass {
     return this.#new([{ type: "remove", value: items }]);
   }
 
-  public set(...items: Items[]): Outclass {
+  set(...items: Items[]): Outclass {
     return this.#new([{ type: "set", value: items }]);
   }
 
-  public apply(...patches: Outclass[]): Outclass {
+  apply(...patches: Outclass[]): Outclass {
     const actions: Action[] = [];
     for (const out of patches) {
       actions.push({ type: "apply", value: out.#actions });
@@ -83,11 +83,11 @@ class Outclass {
     return this.#new(actions);
   }
 
-  public with(map: Map): Outclass {
+  with(map: Map): Outclass {
     return this.#new(this.#process(map));
   }
 
-  public parse(...params: (Map | Items)[]): string {
+  parse(...params: (Map | Items)[]): string {
     let tokens = new Set<string>();
     const actions = [...this.#actions];
 
