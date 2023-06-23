@@ -87,13 +87,20 @@ class Outclass {
     return this.#new(this.#parseMap(map));
   }
 
-  // TODO can parse take map | Items[]?
-  public parse(map?: Map): string {
+  public parse(...params: (Map | Items)[]): string {
     let tokens = new Set<string>();
     const actions = [...this.#actions];
 
-    if (map) {
-      actions.push(...this.#parseMap(map));
+    for (const param of params) {
+      if (
+        typeof param === "object" &&
+        param !== null &&
+        !Array.isArray(param)
+      ) {
+        actions.push(...this.#parseMap(param));
+      } else {
+        actions.push({ type: "add", value: param });
+      }
     }
 
     while (actions.length > 0) {
