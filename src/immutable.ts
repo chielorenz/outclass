@@ -40,7 +40,7 @@ class Outclass {
     return new Outclass([...this.#actions, ...actions]);
   }
 
-  #parseMap(map: Map): Action[] {
+  #process(map: Map): Action[] {
     let actions: Action[] = [];
 
     let type: keyof Map;
@@ -84,7 +84,7 @@ class Outclass {
   }
 
   public with(map: Map): Outclass {
-    return this.#new(this.#parseMap(map));
+    return this.#new(this.#process(map));
   }
 
   public parse(...params: (Map | Items)[]): string {
@@ -97,7 +97,7 @@ class Outclass {
         param !== null &&
         !Array.isArray(param)
       ) {
-        actions.push(...this.#parseMap(param));
+        actions.push(...this.#process(param));
       } else {
         actions.push({ type: "add", value: param });
       }
