@@ -22,8 +22,8 @@ You can go on and read the [documentation](#documentation) or try the interactiv
 - Zero dependencies
 - Framework agnostic
 - Fully typed
-- Tiny: < 1KB minified + zipped
-- Fast: 1M tokens < 100ms
+- Tiny: ~ 1KB minified + brotli
+- Fast: 1M tokens ~ 100ms
 - Fully tested
 
 ## Installation
