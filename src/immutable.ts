@@ -39,7 +39,7 @@ function parse(...items: Items[]): string[] {
 class Outclass {
   #actions: Action[] = [];
 
-  #new(actions: Action[] = []) {
+  #new(actions: Action[]) {
     return new Outclass([...this.#actions, ...actions]);
   }
 
@@ -49,7 +49,7 @@ class Outclass {
     let type: keyof Map;
     for (type in map) {
       if (type === "apply") {
-        let outs = map.apply || [];
+        let outs = map.apply!;
         outs = Array.isArray(outs) ? outs : [outs];
         for (const out of outs) {
           actions.push({ type, value: out.#actions });
@@ -107,8 +107,7 @@ class Outclass {
     }
 
     while (actions.length > 0) {
-      const action = actions.shift();
-      if (!action) continue;
+      const action = actions.shift()!;
 
       if (action.type === "apply") {
         actions.push(...action.value);
