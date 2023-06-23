@@ -36,8 +36,7 @@ function parse(...items: Items[]): string[] {
 class Outclass {
   #actions: Action[] = [];
 
-  // TODO rename mitosis to something better
-  #mitosis(actions: Action[] = []) {
+  #new(actions: Action[] = []) {
     return new Outclass([...this.#actions, ...actions]);
   }
 
@@ -65,15 +64,15 @@ class Outclass {
   }
 
   public add(...items: Items[]): Outclass {
-    return this.#mitosis([{ type: "add", value: items }]);
+    return this.#new([{ type: "add", value: items }]);
   }
 
   public remove(...items: Items[]): Outclass {
-    return this.#mitosis([{ type: "remove", value: items }]);
+    return this.#new([{ type: "remove", value: items }]);
   }
 
   public set(...items: Items[]): Outclass {
-    return this.#mitosis([{ type: "set", value: items }]);
+    return this.#new([{ type: "set", value: items }]);
   }
 
   public apply(...patches: Outclass[]): Outclass {
@@ -81,11 +80,11 @@ class Outclass {
     for (const out of patches) {
       actions.push({ type: "apply", value: out.#actions });
     }
-    return this.#mitosis(actions);
+    return this.#new(actions);
   }
 
   public with(map: Map): Outclass {
-    return this.#mitosis(this.#parseMap(map));
+    return this.#new(this.#parseMap(map));
   }
 
   // TODO can parse take map | Items[]?
