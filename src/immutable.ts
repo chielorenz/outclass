@@ -8,6 +8,7 @@ export type Action =
       items: Item;
     }
   | {
+      // TODO items should contain a list of Actions instead of an Outclass?
       type: "apply";
       items: Outclass;
     };
@@ -45,6 +46,7 @@ function parse(...params: Item[]): Set<string> {
 class Outclass {
   #actions: Action[] = [];
 
+  // TODO rename mitosis to something better
   #mitosis(actions: Action[] = []) {
     return new Outclass([...this.#actions, ...actions]);
   }
@@ -55,18 +57,13 @@ class Outclass {
     let type: keyof Map;
     for (type in map) {
       if (type === "apply") {
-        const out = map[type];
-        if (out) actions.push({ type, items: out });
+        if (map.apply) actions.push({ type, items: map.apply });
       } else {
         actions.push({ type, items: map[type] });
       }
     }
 
     return actions;
-  }
-
-  #patch(): Action[] {
-    return this.#actions;
   }
 
   public constructor(actions: Action[] = []) {
@@ -118,7 +115,7 @@ class Outclass {
           const parsed = parse(action.items);
           tokens = parsed;
         } else if (action.type === "apply") {
-          actions.push(...action.items.#patch());
+          actions.push(...action.items.#actions);
         }
       }
     }
