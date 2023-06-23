@@ -12,12 +12,12 @@ export type Action =
       value: Action[];
     };
 
-export type Map = {
-  set?: Items;
-  add?: Items;
-  remove?: Items;
-  apply?: Outclass | Outclass[];
-};
+export type Map = Partial<{
+  set: Items;
+  add: Items;
+  remove: Items;
+  apply: Outclass | Outclass[];
+}>;
 
 function parse(...items: Items[]): string[] {
   const tokens: string[] = [];
