@@ -1,44 +1,27 @@
 export type Value = string | undefined | null | boolean;
-export type Item = Value | List;
-export type List = Array<Item>;
+export type Items = Value | Items[];
 export type Action = {
     type: "add" | "remove" | "set";
-    tokens: Set<string>;
+    value: Items;
+} | {
+    type: "apply";
+    value: Action[];
 };
-export type Patch = {
-    type: "patch";
-    actions: Action[];
-};
-export type LayerMap = {
-    add?: Item;
-    remove?: Item;
-    set?: Item;
-    patch?: Patch | Patch[];
-};
-export type SlotMap = {
-    [key: string]: Item;
-};
-declare class Parser {
-    parse(...params: List): string;
-    get layer(): Layer;
-    get slot(): Slot;
+export type Map = Partial<{
+    set: Items;
+    add: Items;
+    remove: Items;
+    apply: Outclass | Outclass[];
+}>;
+declare class Outclass {
+    #private;
+    constructor(actions?: Action[]);
+    add(...items: Items[]): Outclass;
+    remove(...items: Items[]): Outclass;
+    set(...items: Items[]): Outclass;
+    apply(...patches: Outclass[]): Outclass;
+    with(map: Map): Outclass;
+    parse(...params: (Map | Items)[]): string;
 }
-declare class Layer {
-    private actions;
-    private patches;
-    add(...params: List): Layer;
-    remove(...params: List): Layer;
-    set(...params: List): Layer;
-    apply(...patches: Patch[]): Layer;
-    with(actions: LayerMap): Layer;
-    get patch(): Patch;
-    parse(actions?: LayerMap): string;
-}
-declare class Slot {
-    private slots;
-    set(key: string, ...params: List): Slot;
-    with(config: SlotMap): Slot;
-    parse(config?: SlotMap): string;
-}
-declare const out: Parser;
+declare const out: Outclass;
 export { out };
