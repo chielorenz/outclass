@@ -26,7 +26,10 @@ function parse(...items: Items[]): string[] {
     if (item instanceof Array) {
       tokens.push(...parse(...item));
     } else if (typeof item === "string") {
-      tokens.push(...item.split(" "));
+      const split = item.split(" ");
+      for (const token of split) {
+        if (token) tokens.push(token);
+      }
     }
   }
 
