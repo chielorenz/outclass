@@ -20,7 +20,7 @@ out.apply(customStyle).parse("flex p-2");
 // flex p-4
 ```
 
-Read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/stype-demo?file=app%2Fpage.tsx).
+Read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/outclass-playground?file=app%2Fpage.tsx).
 
 ## Main features:
 
