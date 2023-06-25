@@ -127,5 +127,4 @@ class Outclass {
   }
 }
 
-const out = new Outclass();
-export { out };
+export default new Outclass();

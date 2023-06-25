@@ -3,7 +3,7 @@
 Outclass is a CSS class string manipulation tool, it allows you to define classes in a dynamic and composable way. For example:
 
 ```ts
-import { out } from "outclass"
+import out from "outclass";
 
 out.parse("flex rounded", "p-2");
 // flex rounded p-2
@@ -45,7 +45,7 @@ pnpm add github:b1n01/outclass
 ### Deno
 
 ```ts
-import { out } from "https://esm.sh/gh/b1n01/outclass";
+import out from "https://esm.sh/gh/b1n01/outclass";
 ```
 
 ### Bun
@@ -59,7 +59,7 @@ bun add github:b1n01/outclass
 All methods are exposed by the `out` object, which can be imported from the `outclass` module:
 
 ```ts
-import { out } from "outclass";
+import out from "outclass";
 ```
 
 ### Parsing
@@ -212,5 +212,3 @@ To enable TailwindCSS IntelliSense on Outclass methods calls, add this regex to 
 ```
 
 </details>
-
-<!-- ## Contributing -->
