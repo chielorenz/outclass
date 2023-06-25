@@ -13,12 +13,14 @@ out.parse([
     isActive ? "cursor-pointer" : "cursor-not-allowed",
     isDirty && "border-2",
 ]);
-// w-32 h-32 cursor-pointer, when isActive = true and isDirty = false
+// w-32 h-32 cursor-pointer, when isActive is true and isDirty is false
 
 const customStyle = out.remove("p-2").add("p-4");
 out.apply(customStyle).parse("flex p-2");
 // flex p-4
 ```
+
+Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS and UnoCSS.
 
 Read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/outclass-playground?file=app%2Fpage.tsx).
 
@@ -63,9 +65,9 @@ import { out } from "outclass";
 
 ### Parsing
 
-In general the main functionality is converting the input into a single string consisting of a space-separated list of unique CSS classes, where the order of the input is preserved and, in case of duplicate values, only the first instance is kept.
+Generally speaking the core functionality is converting some input into a single string consisting of a space-separated list of unique CSS classes, where the order of the input is preserved and, in case of duplicate values, only the first instance is kept.
 
-For this purpose there is the `parse` method. It takes strings and arrays of strings as input, also handling nested arrays:
+For this purpose there is the `parse` method. It takes strings and arrays of strings as input, also handling nested values:
 
 ```ts
 out.parse("flex p-2");
@@ -92,7 +94,7 @@ out.parse("", null, undefined, true, false, []);
 
 const props = { classes: "bg-slate-700" };
 out.parse(isMuted && "cursor-not-allowed", props?.classes);
-// cursor-not-allowed bg-slate-700, if isMuted is true
+// cursor-not-allowed bg-slate-700, when isMuted is true
 ```
 
 ### Building
@@ -123,7 +125,7 @@ out.add("place-self-start").parse("m-4");
 
 #### Immutability
 
-Actions methods always return a new instance of the `out`, making it **immutable** and allowing for chaining methods calls:
+Actions methods always return a new instance of `out`, making it **immutable**:
 
 ```ts
 const style = out.add("text-end");
@@ -133,6 +135,13 @@ out.parse();
 
 style.parse();
 // text-end
+```
+
+This, as already shown in the examples, allows for method chaining:
+
+```ts
+out.set("box-content p-4").add("inline").apply(out.remove("p-4")).parse();
+// box-content inline
 ```
 
 ### Compose
@@ -145,23 +154,23 @@ out.apply(style).parse();
 // tracking-wide
 ```
 
-Applied classes are queued up and evaluated after the "patched" object one:
+Applied classes are queued up and evaluated after the classes of the main object:
 
 ```ts
 out.apply(out.remove("m-2")).add("self-end m-2").parse();
 // self-end
 ```
 
-Composability is not limited to one-level deep:
+Composability is not limited to one level of depth:
 
 ```ts
 out.apply(out.apply(out.add("flex"))).parse();
 // flex
 ```
 
-### Action map
+### Actions map
 
-To apply multiple actions in a single method call you can use the `with` method. It takes an "action map" which is an object that contains multiple actions:
+To apply multiple actions in a single method call you can use the `with` method. It takes an "actions map" which is an object that contains multiple actions:
 
 ```ts
 out
@@ -181,8 +190,6 @@ Actions map can also be used as parameters of the `parse` method:
 out.parse({ add: "grow", apply: out.add("order-8")}):
 // grow order-8
 ```
-
-<!-- ## API reference -->
 
 ## Integrations
 
