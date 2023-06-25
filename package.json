@@ -11,8 +11,7 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "test": "jest",
-    "benchmark": "node --stack-size=8192 benchmarks/node.js"
+    "test": "jest"
   },
   "keywords": [
     "class",
