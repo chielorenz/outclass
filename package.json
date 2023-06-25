@@ -1,7 +1,7 @@
 {
   "name": "outclass",
   "version": "0.1.0",
-  "description": "A class string manipulation tool",
+  "description": "A CSS class string manipulation tool",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
