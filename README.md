@@ -30,7 +30,6 @@ Read the [documentation](#documentation) or try the [playground on CodeSandbox](
 - Framework agnostic
 - Fully typed
 - Tiny: ~ 1KB minified + brotli
-- Fast: parses 1M tokens ~ 100ms
 - Fully tested
 
 ## Installation
