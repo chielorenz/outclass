@@ -9,7 +9,7 @@
     "lib"
   ],
   "scripts": {
-    "dev": "nodemon",
+    "dev": "jest --watch",
     "build": "tsc",
     "test": "jest"
   },
@@ -24,7 +24,6 @@
   "devDependencies": {
     "@types/jest": "^29.5.2",
     "jest": "^29.5.0",
-    "nodemon": "^2.0.22",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
   },
@@ -35,9 +34,5 @@
     "coverageReporters": [
       "text"
     ]
-  },
-  "nodemonConfig": {
-    "ext": "ts",
-    "exec": "npm run test"
   }
 }
