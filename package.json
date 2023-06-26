@@ -13,6 +13,11 @@
     "build": "tsc",
     "test": "jest"
   },
+  "exports": {
+    ".": {
+      "import": "./lib/index.js"
+    }
+  },
   "keywords": [
     "class",
     "className",
