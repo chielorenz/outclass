@@ -13,7 +13,8 @@ export type Map = Partial<{
     remove: Items;
     apply: Outclass | Outclass[];
 }>;
-declare class Outclass {
+export type Outclass = InstanceType<typeof Out>;
+declare class Out {
     #private;
     constructor(actions?: Action[]);
     add(...items: Items[]): Outclass;
@@ -23,5 +24,5 @@ declare class Outclass {
     with(map: Map): Outclass;
     parse(...params: (Map | Items)[]): string;
 }
-declare const _default: Outclass;
+declare const _default: Out;
 export default _default;
