@@ -19,6 +19,8 @@ export type Map = Partial<{
   apply: Outclass | Outclass[];
 }>;
 
+export type Outclass = InstanceType<typeof Out>;
+
 function parse(...items: Items[]): string[] {
   const tokens: string[] = [];
 
@@ -36,11 +38,11 @@ function parse(...items: Items[]): string[] {
   return tokens;
 }
 
-class Outclass {
+class Out {
   #actions: Action[] = [];
 
   #new(actions: Action[]) {
-    return new Outclass([...this.#actions, ...actions]);
+    return new Out([...this.#actions, ...actions]);
   }
 
   #process(map: Map): Action[] {
@@ -127,4 +129,4 @@ class Outclass {
   }
 }
 
-export default new Outclass();
+export default new Out();
