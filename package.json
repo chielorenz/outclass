@@ -10,12 +10,17 @@
   ],
   "scripts": {
     "dev": "jest --watch",
-    "build": "tsc",
+    "build:clean": "rm -rf lib/*",
+    "build:esm": "tsc -p tsconfig.esm.json && mv lib/esm/index.js lib/esm/index.mjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json && mv lib/cjs/index.js lib/cjs/index.cjs",
+    "build": "npm run build:clean && npm run build:cjs && npm run build:esm",
     "test": "jest"
   },
   "exports": {
     ".": {
-      "import": "./lib/index.js"
+      "types": "./lib/index.d.ts",
+      "import": "./lib/esm/index.mjs",
+      "require": "./lib/cjs/index.cjs"
     }
   },
   "keywords": [
