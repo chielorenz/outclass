@@ -51,14 +51,14 @@ bun add outclass
 ### Deno
 
 ```ts
-import { out } from "https://esm.sh/gh/b1n01/outclass";
+import { out } from "https://esm.sh/outclass";
 ```
 
 ### In the browser
 
 ```html
 <script type="module">
-  import { out } from "https://esm.sh/gh/b1n01/outclass";
+  import { out } from "https://esm.sh/outclass";
   out.parse("flex");
 </script>
 ```
@@ -72,7 +72,7 @@ All methods are exposed by the `out` object, which can be imported from the `out
 import { out } from "outclass";
 
 // Remote esm module
-import { out } from "https://esm.sh/gh/b1n01/outclass";
+import { out } from "https://esm.sh/outclass";
 
 // CommonJs
 const { out } = require("outclass");
