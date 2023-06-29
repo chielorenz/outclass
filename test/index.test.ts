@@ -1,4 +1,4 @@
-import out from "../src/index";
+import { out } from "../src/index";
 
 describe("Parse", () => {
   test("Empty", () => {

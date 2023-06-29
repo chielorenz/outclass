@@ -129,4 +129,5 @@ class Out {
   }
 }
 
-export default new Out();
+const out = new Out();
+export { out };
