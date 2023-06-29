@@ -1,9 +1,11 @@
 # Outclass
 
+> Currently in pre-release version, expect breaking changes.
+
 Outclass is a CSS class string manipulation tool, it allows you to define classes in a dynamic and composable way. For example:
 
 ```ts
-import out from "outclass";
+import { out } from "outclass";
 
 out.parse("flex rounded", "p-2");
 // flex rounded p-2
@@ -20,38 +22,45 @@ out.apply(customStyle).parse("flex p-2");
 // flex p-4
 ```
 
-Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS and UnoCSS.
+Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS and UnoCSS, read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/outclass-playground?file=app%2Fpage.tsx).
 
-Read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/outclass-playground?file=app%2Fpage.tsx).
-
-## Main features:
+## Main features
 
 - Zero dependencies
 - Framework agnostic
 - Fully typed
-- Tiny: ~ 1KB minified + brotli
 - Fully tested
+- Tiny: ~ 1KB minified + brotli
 
 ## Installation
 
 ### Node
 
 ```bash
-npm  add github:b1n01/outclass
-yarn add github:b1n01/outclass
-pnpm add github:b1n01/outclass
-```
-
-### Deno
-
-```ts
-import out from "https://esm.sh/gh/b1n01/outclass";
+npm  add outclass
+yarn add outclass
+pnpm add outclass
 ```
 
 ### Bun
 
 ```bash
-bun add github:b1n01/outclass
+bun add outclass
+```
+
+### Deno
+
+```ts
+import { out } from "https://esm.sh/gh/b1n01/outclass";
+```
+
+### In the browser
+
+```html
+<script type="module">
+  import { out } from "https://esm.sh/gh/b1n01/outclass";
+  out.parse("flex");
+</script>
 ```
 
 ## Documentation
@@ -59,7 +68,14 @@ bun add github:b1n01/outclass
 All methods are exposed by the `out` object, which can be imported from the `outclass` module:
 
 ```ts
-import out from "outclass";
+// Local esm module
+import { out } from "outclass";
+
+// Remote esm module
+import { out } from "https://esm.sh/gh/b1n01/outclass";
+
+// CommonJs
+const { out } = require("outclass");
 ```
 
 ### Parsing
