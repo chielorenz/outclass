@@ -2,6 +2,10 @@ export type Value = string | undefined | null | boolean;
 
 export type Items = Value | Items[];
 
+export type Variant = { [key: string]: string };
+
+export type Variants = Variant | Variants[];
+
 export type Action =
   | {
       type: "add" | "remove" | "set";
@@ -9,7 +13,11 @@ export type Action =
     }
   | {
       type: "apply";
-      value: Action[];
+      value: Outclass;
+    }
+  | {
+      type: "variant";
+      value: Variants;
     };
 
 export type Map = Partial<{
@@ -17,9 +25,14 @@ export type Map = Partial<{
   add: Items;
   remove: Items;
   apply: Outclass | Outclass[];
+  // variant: Variants;
+  // choose: string[];
 }>;
 
 export type Outclass = InstanceType<typeof Out>;
+
+export type Choice = string;
+export type Choices = Choice | Choices[];
 
 function parse(...items: Items[]): string[] {
   const tokens: string[] = [];
@@ -38,9 +51,25 @@ function parse(...items: Items[]): string[] {
   return tokens;
 }
 
+export type Slot<Type> = Type;
+export type Slots<Type> = Slot<Type> | Slots<Type>[];
+function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
+  const list: Type[] = [];
+  for (const item of items) {
+    if (item instanceof Array) {
+      list.push(...flat(...item));
+    } else {
+      list.push(item);
+    }
+  }
+  return list;
+}
+
 class Out {
   #actions: Action[] = [];
+  #choices: Choices[] = [];
 
+  // Deprecate this in favor of clone()?
   #new(actions: Action[]) {
     return new Out([...this.#actions, ...actions]);
   }
@@ -54,7 +83,7 @@ class Out {
         let outs = map.apply!;
         outs = Array.isArray(outs) ? outs : [outs];
         for (const out of outs) {
-          actions.push({ type, value: out.#actions });
+          actions.push({ type, value: out });
         }
       } else {
         actions.push({ type, value: map[type] });
@@ -64,6 +93,14 @@ class Out {
     return actions;
   }
 
+  #clone(): Outclass {
+    const out = new Out();
+    out.#actions = this.#actions;
+    out.#choices = this.#choices;
+    return out;
+  }
+
+  // Deprecate this in favor of clone()?
   constructor(actions: Action[] = []) {
     this.#actions = actions;
   }
@@ -83,19 +120,34 @@ class Out {
   apply(...patches: Outclass[]): Outclass {
     const actions: Action[] = [];
     for (const out of patches) {
-      actions.push({ type: "apply", value: out.#actions });
+      actions.push({ type: "apply", value: out });
     }
     return this.#new(actions);
   }
 
-  with(map: Map): Outclass {
-    return this.#new(this.#process(map));
+  with(...maps: Map[]): Outclass {
+    const actions: Action[] = [];
+    for (const map of maps) {
+      actions.push(...this.#process(map));
+    }
+    return this.#new(actions);
+  }
+
+  variant(...variants: Variants[]): Outclass {
+    return this.#new([{ type: "variant", value: variants }]);
+  }
+
+  choose(...choices: Choices[]): Outclass {
+    const out = this.#clone();
+    out.#choices.push(choices);
+    return out;
   }
 
   parse(...params: (Map | Items)[]): string {
-    let tokens = new Set<string>();
     const actions = [...this.#actions];
+    const tokens = new Set<string>();
 
+    // Handle parse(parameter)
     for (const param of params) {
       if (
         typeof param === "object" &&
@@ -108,19 +160,67 @@ class Out {
       }
     }
 
+    // Join all variant choices
+    const variants: Variant[] = [];
+    for (const action of actions) {
+      if (action.type === "variant") {
+        variants.push(...flat(action.value));
+      }
+    }
+
+    const flatChoices: string[][] = [];
+    for (const choice of this.#choices) {
+      const flatChoice = flat(choice).join(" ").split(" ");
+      flatChoices.push(flatChoice);
+    }
+    const choices: string[] = [];
+
+    while (flatChoices.length > 0) {
+      let choice = flatChoices.pop()!;
+      for (const variant of variants) {
+        const keys = Object.keys(variant);
+        for (const key of keys) {
+          if (key.split(" ").every((k) => choices.includes(k))) {
+            for (const otherKey of keys) {
+              if (!otherKey.includes(" ") && otherKey != key) {
+                choice = choice.filter((c) => c != otherKey);
+              }
+            }
+          }
+        }
+      }
+      choices.push(...choice);
+    }
+
     while (actions.length > 0) {
       const action = actions.shift()!;
 
       if (action.type === "apply") {
-        actions.push(...action.value);
+        actions.push(...action.value.#actions);
+      } else if (action.type === "variant") {
+        const variants = flat(action.value);
+        for (const variant of variants) {
+          const counts: string[] = [];
+          for (const [key, value] of Object.entries(variant)) {
+            const keys = key.split(" ");
+            if (keys.every((p) => choices.includes(p))) {
+              counts[keys.length] = value;
+            }
+          }
+          if (counts.length > 0) {
+            const items = counts.pop()!.split(" ");
+            for (const item of items) tokens.add(item);
+          }
+        }
       } else {
         const items = parse(action.value);
-        if (action.type === "add") {
-          for (const item of items) tokens.add(item);
-        } else if (action.type === "remove") {
+        if (action.type === "remove") {
           for (const item of items) tokens.delete(item);
-        } else if (action.type === "set") {
-          tokens = new Set(items);
+        } else {
+          if (action.type === "set") {
+            tokens.clear();
+          }
+          for (const item of items) tokens.add(item);
         }
       }
     }
