@@ -6,6 +6,14 @@ export type Variant = { [key: string]: string };
 
 export type Variants = Variant | Variants[];
 
+export type Choice = string;
+
+export type Choices = Choice | Choices[];
+
+type Slot<Type> = Type;
+
+type Slots<Type> = Slot<Type> | Slots<Type>[];
+
 export type Action =
   | {
       type: "add" | "remove" | "set";
@@ -29,11 +37,6 @@ export type Map = Partial<{
   // choose: string[];
 }>;
 
-export type Outclass = InstanceType<typeof Out>;
-
-export type Choice = string;
-export type Choices = Choice | Choices[];
-
 function parse(...items: Items[]): string[] {
   const tokens: string[] = [];
 
@@ -51,8 +54,6 @@ function parse(...items: Items[]): string[] {
   return tokens;
 }
 
-export type Slot<Type> = Type;
-export type Slots<Type> = Slot<Type> | Slots<Type>[];
 function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
   const list: Type[] = [];
   for (const item of items) {
@@ -65,7 +66,7 @@ function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
   return list;
 }
 
-class Out {
+class Outclass {
   #actions: Action[] = [];
   #choices: Choices[] = [];
 
@@ -229,5 +230,5 @@ class Out {
   }
 }
 
-const out = new Out();
+const out = new Outclass();
 export { out };
