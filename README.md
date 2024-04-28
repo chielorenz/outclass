@@ -228,3 +228,10 @@ To enable TailwindCSS IntelliSense on Outclass methods calls, add this regex to 
 ```
 
 </details>
+
+# TODO
+
+- [] ~~Should add(), remove() and set() take an Outclass? If so, we could deprecate apply().~~ NO, apply() is there for a difference reason, to apply a patch of which you don't know the content! I does not make sense to add(patch) but the patch really is removing classes.
+- [] Should with() take an array of Maps?
+- [] Should apply() take an array of Outclass?
+- [] Should choose() accepts (...items: Items[]) like other methods?
