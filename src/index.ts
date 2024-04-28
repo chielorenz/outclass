@@ -70,9 +70,12 @@ class Outclass {
   #actions: Action[] = [];
   #choices: Choices[] = [];
 
-  // Deprecate this in favor of clone()?
-  #new(actions: Action[]) {
-    return new Out([...this.#actions, ...actions]);
+  #clone(): Outclass {
+    const out = new Outclass();
+    // TODO use structuredClone() instead?
+    out.#actions = [...this.#actions];
+    out.#choices = [...this.#choices];
+    return out;
   }
 
   #process(map: Map): Action[] {
@@ -94,48 +97,44 @@ class Outclass {
     return actions;
   }
 
-  #clone(): Outclass {
-    const out = new Out();
-    out.#actions = this.#actions;
-    out.#choices = this.#choices;
+  add(...items: Items[]): Outclass {
+    const out = this.#clone();
+    out.#actions.push({ type: "add", value: items });
     return out;
   }
 
-  // Deprecate this in favor of clone()?
-  constructor(actions: Action[] = []) {
-    this.#actions = actions;
-  }
-
-  add(...items: Items[]): Outclass {
-    return this.#new([{ type: "add", value: items }]);
-  }
-
   remove(...items: Items[]): Outclass {
-    return this.#new([{ type: "remove", value: items }]);
+    const out = this.#clone();
+    out.#actions.push({ type: "remove", value: items });
+    return out;
   }
 
   set(...items: Items[]): Outclass {
-    return this.#new([{ type: "set", value: items }]);
+    const out = this.#clone();
+    out.#actions.push({ type: "set", value: items });
+    return out;
   }
 
   apply(...patches: Outclass[]): Outclass {
-    const actions: Action[] = [];
-    for (const out of patches) {
-      actions.push({ type: "apply", value: out });
+    const out = this.#clone();
+    for (const patch of patches) {
+      out.#actions.push({ type: "apply", value: patch });
     }
-    return this.#new(actions);
+    return out;
   }
 
   with(...maps: Map[]): Outclass {
-    const actions: Action[] = [];
+    const out = this.#clone();
     for (const map of maps) {
-      actions.push(...this.#process(map));
+      out.#actions.push(...this.#process(map));
     }
-    return this.#new(actions);
+    return out;
   }
 
-  variant(...variants: Variants[]): Outclass {
-    return this.#new([{ type: "variant", value: variants }]);
+  variant(...items: Variants[]): Outclass {
+    const out = this.#clone();
+    out.#actions.push({ type: "variant", value: items });
+    return out;
   }
 
   choose(...choices: Choices[]): Outclass {
@@ -144,7 +143,7 @@ class Outclass {
     return out;
   }
 
-  parse(...params: (Map | Items)[]): string {
+  parse(...params: Map[] | Items[]): string {
     const actions = [...this.#actions];
     const tokens = new Set<string>();
 
