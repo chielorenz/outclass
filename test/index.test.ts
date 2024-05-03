@@ -116,6 +116,7 @@ describe("The apply method", () => {
 
   test("Handles Outclass", () => {
     expect(out.apply(out).parse()).toBe("");
+    expect(out.apply([out]).parse()).toBe("");
     expect(out.apply(out, out).parse()).toBe("");
   });
 
@@ -137,6 +138,8 @@ describe("The apply method", () => {
 describe("The with method", () => {
   test("Handles blank parameters", () => {
     expect(out.with({}).parse()).toBe("");
+    expect(out.with({},{}).parse()).toBe("");
+    expect(out.with([{}]).parse()).toBe("");
   });
 
   test("Keeps actions order", () => {
@@ -279,7 +282,12 @@ describe("The with method", () => {
   // describe("Takes a choose action that", () => {
   //   test("Handles blank parameters", () => {
   //     expect(out.with({ choose: null }).parse()).toBe("");
-  //     expect(out.with({ choose: [] }).parse()).toBe("");
+  //     expect(out.with({ choose: undefined }).parse()).toBe("");
+  //     expect(out.with({ choose: true }).parse()).toBe("");
+  //     expect(out.with({ choose: false }).parse()).toBe("");
+  //     expect(out.with({ choose: "" }).parse()).toBe("");
+  //     expect(out.with({ choose: null }).parse()).toBe("");
+  //     expect(out.with({ choose: [, null, undefined, true, false, "", []] }).parse()).toBe("");
   //   });
   
   //   test("Handles strings", () => {
@@ -316,8 +324,9 @@ describe("The parse method", () => {
     expect(out.parse(false)).toBe("");
     expect(out.parse("")).toBe("");
     expect(out.parse([])).toBe("");
-    expect(out.parse(null, undefined, true, false, "", [])).toBe("");
-    expect(out.parse([, null, undefined, true, false, "", []])).toBe("");
+    expect(out.parse({})).toBe("");
+    expect(out.parse(null, undefined, true, false, "", [], {})).toBe("");
+    expect(out.parse([, null, undefined, true, false, "", []], [{}])).toBe("");
   });
 
   test("Handles strings", () => {
@@ -337,11 +346,7 @@ describe("The parse method", () => {
     expect(out.parse("  a  b  ")).toBe("a b");
   });
 
-  describe("When a Maps is given", () => {
-    test("Handles empty maps", () => {
-      expect(out.parse({})).toBe("");
-    });
-
+  describe("Handles Maps", () => {
     test("Keeps actions order", () => {
       expect(out.parse({ set: "a", remove: "a" })).toBe("");
       expect(out.parse({ remove: "a", set: "a" })).toBe("a");
@@ -468,6 +473,13 @@ describe("The variant method", () => {
 describe("The choose method", () => {
   test("Handles blank parameters", () => {
     expect(out.choose().parse()).toBe("");
+    expect(out.choose(null).parse()).toBe("");
+    expect(out.choose(undefined).parse()).toBe("");
+    expect(out.choose(true).parse()).toBe("");
+    expect(out.choose(false).parse()).toBe("");
+    expect(out.choose("").parse()).toBe("");
+    expect(out.choose([]).parse()).toBe("");
+    expect(out.choose([, null, undefined, true, false, "", []]).parse()).toBe("");
   });
 
   test("Handles strings", () => {

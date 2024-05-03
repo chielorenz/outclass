@@ -1,166 +1,138 @@
 export type Value = string | undefined | null | boolean;
-
 export type Items = Value | Items[];
-
 export type Variant = { [key: string]: string };
-
 export type Variants = Variant | Variants[];
-
-export type Choice = string;
-
-export type Choices = Choice | Choices[];
-
-type Slot<Type> = Type;
-
-type Slots<Type> = Slot<Type> | Slots<Type>[];
-
 export type Action =
   | {
-      type: "add" | "remove" | "set";
+      type: "set" | "add" | "remove";
       value: Items;
     }
   | {
       type: "apply";
-      value: Outclass;
+      value: Outs;
     }
   | {
       type: "variant";
       value: Variants;
     };
-
 export type Map = Partial<{
   set: Items;
   add: Items;
   remove: Items;
-  apply: Outclass | Outclass[];
+  apply: Outs;
   // variant: Variants;
   // choose: string[];
 }>;
+export type Maps = Map | Maps[];
+export type Outs = Out | Outs[];
 
-function parse(...items: Items[]): string[] {
-  const tokens: string[] = [];
+type Slot<Type> = Type;
+type Slots<Type> = Slot<Type> | Slots<Type>[];
+
+// Flattens an infinitely nested array
+function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
+  const values: Type[] = [];
 
   for (const item of items) {
     if (item instanceof Array) {
-      tokens.push(...parse(...item));
-    } else if (typeof item === "string") {
-      const split = item.split(" ");
-      for (const token of split) {
-        if (token) tokens.push(token);
+      values.push(...flat(...item));
+    } else {
+      values.push(item);
+    }
+  }
+
+  return values;
+}
+
+// Convert a array of Maps into the array corresponding Action
+function processMaps(...maps: Maps[]): Action[] {
+  const actions: Action[] = [];
+  let type: keyof Map;
+
+  for (const map of flat(maps)) {
+    for (type in map) {
+      if (type === "apply") {
+        actions.push({ type, value: map.apply! });
+      } else {
+        actions.push({ type, value: map[type] });
       }
     }
   }
 
-  return tokens;
+  return actions;
 }
 
-function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
-  const list: Type[] = [];
-  for (const item of items) {
-    if (item instanceof Array) {
-      list.push(...flat(...item));
-    } else {
-      list.push(item);
-    }
-  }
-  return list;
-}
-
-class Outclass {
+class Out {
   #actions: Action[] = [];
-  #choices: Choices[] = [];
+  #choices: Items[] = [];
 
-  #clone(): Outclass {
-    const out = new Outclass();
-    // TODO use structuredClone() instead?
+  #clone(): Out {
+    const out = new Out();
     out.#actions = [...this.#actions];
     out.#choices = [...this.#choices];
     return out;
   }
 
-  #process(map: Map): Action[] {
-    let actions: Action[] = [];
-
-    let type: keyof Map;
-    for (type in map) {
-      if (type === "apply") {
-        let outs = map.apply!;
-        outs = Array.isArray(outs) ? outs : [outs];
-        for (const out of outs) {
-          actions.push({ type, value: out });
-        }
-      } else {
-        actions.push({ type, value: map[type] });
-      }
-    }
-
-    return actions;
-  }
-
-  add(...items: Items[]): Outclass {
+  add(...items: Items[]): Out {
     const out = this.#clone();
     out.#actions.push({ type: "add", value: items });
     return out;
   }
 
-  remove(...items: Items[]): Outclass {
+  remove(...items: Items[]): Out {
     const out = this.#clone();
     out.#actions.push({ type: "remove", value: items });
     return out;
   }
 
-  set(...items: Items[]): Outclass {
+  set(...items: Items[]): Out {
     const out = this.#clone();
     out.#actions.push({ type: "set", value: items });
     return out;
   }
 
-  apply(...patches: Outclass[]): Outclass {
+  apply(...outs: Outs[]): Out {
     const out = this.#clone();
-    for (const patch of patches) {
-      out.#actions.push({ type: "apply", value: patch });
-    }
+    out.#actions.push({ type: "apply", value: outs });
     return out;
   }
 
-  with(...maps: Map[]): Outclass {
+  with(...maps: Maps[]): Out {
     const out = this.#clone();
-    for (const map of maps) {
-      out.#actions.push(...this.#process(map));
-    }
+    out.#actions.push(...processMaps(maps));
     return out;
   }
 
-  variant(...items: Variants[]): Outclass {
+  variant(...variants: Variants[]): Out {
     const out = this.#clone();
-    out.#actions.push({ type: "variant", value: items });
+    out.#actions.push({ type: "variant", value: variants });
     return out;
   }
 
-  choose(...choices: Choices[]): Outclass {
+  choose(...choices: Items[]): Out {
     const out = this.#clone();
     out.#choices.push(choices);
     return out;
   }
 
-  parse(...params: Map[] | Items[]): string {
+  parse(...params: Array<Maps | Items>): string {
     const actions = [...this.#actions];
-    const tokens = new Set<string>();
+    const tokens = new Set<string>(); // Can rename to classes?
 
-    // Handle parse(parameter)
-    for (const param of params) {
+    // Handle function parameters
+    for (const param of flat(params)) {
       if (
         typeof param === "object" &&
         param !== null &&
         !Array.isArray(param)
       ) {
-        actions.push(...this.#process(param));
+        actions.push(...processMaps(param));
       } else {
         actions.push({ type: "add", value: param });
       }
     }
 
-    // Join all variant choices
+    // Retrieve all variants
     const variants: Variant[] = [];
     for (const action of actions) {
       if (action.type === "variant") {
@@ -168,52 +140,64 @@ class Outclass {
       }
     }
 
-    const flatChoices: string[][] = [];
+    // Retrieve and merge all choices
+    const rawChoices: string[][] = [];
     for (const choice of this.#choices) {
-      const flatChoice = flat(choice).join(" ").split(" ");
-      flatChoices.push(flatChoice);
+      const choices = flat(choice)
+        .filter((c): c is string => typeof c === "string")
+        .join(" ")
+        .split(" ")
+        .filter((c) => c.trim().length);
+      if (choices.length) {
+        rawChoices.push(choices);
+      }
     }
     const choices: string[] = [];
-
-    while (flatChoices.length > 0) {
-      let choice = flatChoices.pop()!;
+    while (rawChoices.length > 0) {
+      const rawChoice = rawChoices.pop()!;
       for (const variant of variants) {
         const keys = Object.keys(variant);
         for (const key of keys) {
           if (key.split(" ").every((k) => choices.includes(k))) {
             for (const otherKey of keys) {
               if (!otherKey.includes(" ") && otherKey != key) {
-                choice = choice.filter((c) => c != otherKey);
+                rawChoice.slice(rawChoice.indexOf(otherKey));
               }
             }
           }
         }
       }
-      choices.push(...choice);
+      choices.push(...rawChoice);
     }
 
+    // Build the list of classes
     while (actions.length > 0) {
       const action = actions.shift()!;
 
       if (action.type === "apply") {
-        actions.push(...action.value.#actions);
+        for (const out of flat(action.value)) {
+          actions.push(...out.#actions);
+        }
       } else if (action.type === "variant") {
-        const variants = flat(action.value);
-        for (const variant of variants) {
-          const counts: string[] = [];
+        for (const variant of flat(action.value)) {
+          const selection: string[] = [];
           for (const [key, value] of Object.entries(variant)) {
             const keys = key.split(" ");
             if (keys.every((p) => choices.includes(p))) {
-              counts[keys.length] = value;
+              selection[keys.length] = value;
             }
           }
-          if (counts.length > 0) {
-            const items = counts.pop()!.split(" ");
+          if (selection.length > 0) {
+            const items = selection.pop()!.split(" ");
             for (const item of items) tokens.add(item);
           }
         }
       } else {
-        const items = parse(action.value);
+        const items = flat(action.value)
+          .filter((i): i is string => typeof i === "string")
+          .join(" ")
+          .split(" ")
+          .filter((i) => i.trim().length);
         if (action.type === "remove") {
           for (const item of items) tokens.delete(item);
         } else {
@@ -229,5 +213,6 @@ class Outclass {
   }
 }
 
-const out = new Outclass();
+const out = new Out();
 export { out };
+export default out;
