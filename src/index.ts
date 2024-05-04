@@ -2,6 +2,8 @@ export type Value = string | undefined | null | boolean;
 export type Items = Value | Items[];
 export type Variant = { [key: string]: string };
 export type Variants = Variant | Variants[];
+export type Maps = Map | Maps[];
+export type Outs = Out | Outs[];
 export type Action =
   | {
       type: "set" | "add" | "remove";
@@ -20,19 +22,15 @@ export type Map = Partial<{
   add: Items;
   remove: Items;
   apply: Outs;
-  // variant: Variants;
-  // choose: string[];
+  variant: Variants;
+  choose: Items;
 }>;
-export type Maps = Map | Maps[];
-export type Outs = Out | Outs[];
-
 type Slot<Type> = Type;
 type Slots<Type> = Slot<Type> | Slots<Type>[];
 
 // Flattens an infinitely nested array
 function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
   const values: Type[] = [];
-
   for (const item of items) {
     if (item instanceof Array) {
       values.push(...flat(...item));
@@ -40,26 +38,28 @@ function flat<Type>(...items: Slots<Type>[]): Slot<Type>[] {
       values.push(item);
     }
   }
-
   return values;
 }
 
-// Convert a array of Maps into the array corresponding Action
-function processMaps(...maps: Maps[]): Action[] {
+// Convert an array of Maps into an array of Actions
+function processMaps(...maps: Maps[]): { actions: Action[]; choices: Items[] } {
   const actions: Action[] = [];
+  const choices: Items[] = [];
   let type: keyof Map;
-
   for (const map of flat(maps)) {
     for (type in map) {
       if (type === "apply") {
         actions.push({ type, value: map.apply! });
+      } else if (type === "variant") {
+        actions.push({ type, value: map.variant! });
+      } else if (type === "choose") {
+        choices.push(map.choose);
       } else {
         actions.push({ type, value: map[type] });
       }
     }
   }
-
-  return actions;
+  return { actions, choices };
 }
 
 class Out {
@@ -99,7 +99,9 @@ class Out {
 
   with(...maps: Maps[]): Out {
     const out = this.#clone();
-    out.#actions.push(...processMaps(maps));
+    const { actions, choices } = processMaps(maps);
+    out.#actions.push(...actions);
+    out.#choices.push(...choices);
     return out;
   }
 
@@ -117,7 +119,12 @@ class Out {
 
   parse(...params: Array<Maps | Items>): string {
     const actions = [...this.#actions];
-    const tokens = new Set<string>(); // Can rename to classes?
+    const choices = [...this.#choices];
+
+    const variants: Variant[] = [];
+    const flatChoices: string[][] = [];
+    const mergedChoices: string[] = [];
+    const classes = new Set<string>();
 
     // Handle function parameters
     for (const param of flat(params)) {
@@ -126,14 +133,15 @@ class Out {
         param !== null &&
         !Array.isArray(param)
       ) {
-        actions.push(...processMaps(param));
+        const items = processMaps(param);
+        actions.push(...items.actions);
+        choices.push(...items.choices);
       } else {
         actions.push({ type: "add", value: param });
       }
     }
 
     // Retrieve all variants
-    const variants: Variant[] = [];
     for (const action of actions) {
       if (action.type === "variant") {
         variants.push(...flat(action.value));
@@ -141,33 +149,31 @@ class Out {
     }
 
     // Retrieve and merge all choices
-    const rawChoices: string[][] = [];
     for (const choice of this.#choices) {
       const choices = flat(choice)
-        .filter((c): c is string => typeof c === "string")
+        .filter((c) => typeof c === "string")
         .join(" ")
         .split(" ")
         .filter((c) => c.trim().length);
       if (choices.length) {
-        rawChoices.push(choices);
+        flatChoices.push(choices);
       }
     }
-    const choices: string[] = [];
-    while (rawChoices.length > 0) {
-      const rawChoice = rawChoices.pop()!;
+    while (flatChoices.length > 0) {
+      const flatChoice = flatChoices.pop()!;
       for (const variant of variants) {
         const keys = Object.keys(variant);
         for (const key of keys) {
-          if (key.split(" ").every((k) => choices.includes(k))) {
+          if (key.split(" ").every((k) => mergedChoices.includes(k))) {
             for (const otherKey of keys) {
               if (!otherKey.includes(" ") && otherKey != key) {
-                rawChoice.slice(rawChoice.indexOf(otherKey));
+                flatChoice.slice(flatChoice.indexOf(otherKey));
               }
             }
           }
         }
       }
-      choices.push(...rawChoice);
+      mergedChoices.push(...flatChoice);
     }
 
     // Build the list of classes
@@ -183,33 +189,33 @@ class Out {
           const selection: string[] = [];
           for (const [key, value] of Object.entries(variant)) {
             const keys = key.split(" ");
-            if (keys.every((p) => choices.includes(p))) {
+            if (keys.every((p) => mergedChoices.includes(p))) {
               selection[keys.length] = value;
             }
           }
           if (selection.length > 0) {
             const items = selection.pop()!.split(" ");
-            for (const item of items) tokens.add(item);
+            for (const item of items) classes.add(item);
           }
         }
       } else {
         const items = flat(action.value)
-          .filter((i): i is string => typeof i === "string")
+          .filter((i) => typeof i === "string")
           .join(" ")
           .split(" ")
           .filter((i) => i.trim().length);
         if (action.type === "remove") {
-          for (const item of items) tokens.delete(item);
+          for (const item of items) classes.delete(item);
         } else {
           if (action.type === "set") {
-            tokens.clear();
+            classes.clear();
           }
-          for (const item of items) tokens.add(item);
+          for (const item of items) classes.add(item);
         }
       }
     }
 
-    return [...tokens].join(" ");
+    return [...classes].join(" ");
   }
 }
 

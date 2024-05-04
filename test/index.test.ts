@@ -267,52 +267,52 @@ describe("The with method", () => {
     });
   });
 
-  // describe("Takes a variant action that", () => {
-  //   test("Handles blank parameters", () => {
-  //     expect(out.with({variant: {}}).parse()).toBe("");
-  //     expect(out.with({variant: [{}, {}]}).parse()).toBe("");
-  //   });
+  describe("Takes a variant action that", () => {
+    test("Handles blank parameters", () => {
+      expect(out.with({variant: {}}).parse()).toBe("");
+      expect(out.with({variant: [{}]}).parse()).toBe("");
+    });
   
-  //   test("Takes Variants", () => {
-  //     expect(out.with({variant: { a: "a" }}).parse()).toBe("");
-  //     expect(out.with({variant: [{ a: "a" }, { b: "b" }]}).parse()).toBe("");
-  //   });
-  // });
+    test("Takes Variants", () => {
+      expect(out.with({variant: { a: "a" }}).parse()).toBe("");
+      expect(out.with({variant: [{ a: "a" }, { b: "b" }]}).parse()).toBe("");
+    });
+  });
  
-  // describe("Takes a choose action that", () => {
-  //   test("Handles blank parameters", () => {
-  //     expect(out.with({ choose: null }).parse()).toBe("");
-  //     expect(out.with({ choose: undefined }).parse()).toBe("");
-  //     expect(out.with({ choose: true }).parse()).toBe("");
-  //     expect(out.with({ choose: false }).parse()).toBe("");
-  //     expect(out.with({ choose: "" }).parse()).toBe("");
-  //     expect(out.with({ choose: null }).parse()).toBe("");
-  //     expect(out.with({ choose: [, null, undefined, true, false, "", []] }).parse()).toBe("");
-  //   });
+  describe("Takes a choose action that", () => {
+    test("Handles blank parameters", () => {
+      expect(out.with({ choose: null }).parse()).toBe("");
+      expect(out.with({ choose: undefined }).parse()).toBe("");
+      expect(out.with({ choose: true }).parse()).toBe("");
+      expect(out.with({ choose: false }).parse()).toBe("");
+      expect(out.with({ choose: "" }).parse()).toBe("");
+      expect(out.with({ choose: null }).parse()).toBe("");
+      expect(out.with({ choose: [, null, undefined, true, false, "", []] }).parse()).toBe("");
+    });
   
-  //   test("Handles strings", () => {
-  //     expect(out.with({ choose: "a"} ).parse()).toBe("");
-  //     expect(out.with({ choose: ["a", "b"] }).parse()).toBe("");
-  //   });
+    test("Handles strings", () => {
+      expect(out.with({ choose: "a"} ).parse()).toBe("");
+      expect(out.with({ choose: ["a", "b"] }).parse()).toBe("");
+    });
   
-  //   test("Chooses variants", () => {
-  //     expect(out.variant({ a: "a" }).with({ choose: "a" }).parse()).toBe("");
-  //     expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).parse()).toBe("a");
-  //     expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).with({ choose: "a 2" }).parse()).toBe("a 2");
-  //   });
+    test("Chooses variants", () => {
+      expect(out.variant({ a: "a" }).with({ choose: "a" }).parse()).toBe("a");
+      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).parse()).toBe("a");
+      expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).with({ choose: "a 2" }).parse()).toBe("a 2");
+    });
   
-  //   test("Replaces previous chosen variants", () => {
-  //     expect(out.variant({ a: "a", b: "b" }).with({ choose: "a b" }).parse()).toBe("b");
-  //     expect(out.variant({ a: "a", b: "b" }).with({ choose: ["a", "b"] }).parse()).toBe("b");
-  //     expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).with({ choose: "b" }).parse()).toBe("b");
-  //   });
+    test("Replaces previous chosen variants", () => {
+      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a b" }).parse()).toBe("b");
+      expect(out.variant({ a: "a", b: "b" }).with({ choose: ["a", "b"] }).parse()).toBe("b");
+      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).with({ choose: "b" }).parse()).toBe("b");
+    });
   
-  //   test("Handles compound variants", () => {
-  //     expect(out.variant({ "a b": "a b" }).with({ choose: "a" }).parse()).toBe("");
-  //     expect(out.variant({ "a b": "a b" }).with({ choose: "b" }).parse()).toBe("a");
-  //     expect(out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse()).toBe("a b");
-  //   });
-  // });
+    test("Handles compound variants", () => {
+      expect(out.variant({ "a b": "a b" }).with({ choose: "a" }).parse()).toBe("");
+      expect(out.variant({ "a b": "a b" }).with({ choose: "b" }).parse()).toBe("");
+      expect(out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse()).toBe("a b");
+    });
+  });
 });
 
 describe("The parse method", () => {
