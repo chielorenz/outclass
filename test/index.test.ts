@@ -453,6 +453,52 @@ describe("The parse method", () => {
         expect(out.parse({ apply: [out.set("a"), out.set("b")] })).toBe("b");
       });
     });
+
+    describe("Takes a variant action that", () => {
+      test("Handles blank parameters", () => {
+        expect(out.parse({variant: {}})).toBe("");
+        expect(out.parse({variant: [{}]})).toBe("");
+      });
+    
+      test("Takes Variants", () => {
+        expect(out.parse({variant: { a: "a" }})).toBe("");
+        expect(out.parse({variant: [{ a: "a" }, { b: "b" }]})).toBe("");
+      });
+    });
+   
+    describe("Takes a choose action that", () => {
+      test("Handles blank parameters", () => {
+        expect(out.parse({ choose: null })).toBe("");
+        expect(out.parse({ choose: undefined })).toBe("");
+        expect(out.parse({ choose: true })).toBe("");
+        expect(out.parse({ choose: false })).toBe("");
+        expect(out.parse({ choose: "" })).toBe("");
+        expect(out.parse({ choose: null })).toBe("");
+        expect(out.parse({ choose: [, null, undefined, true, false, "", []] })).toBe("");
+      });
+    
+      test("Handles strings", () => {
+        expect(out.parse({ choose: "a"} )).toBe("");
+        expect(out.parse({ choose: ["a", "b"] })).toBe("");
+      });
+    
+      test("Chooses variants", () => {
+        expect(out.variant({ a: "a" }).parse({ choose: "a" })).toBe("a");
+        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a" })).toBe("a");
+        expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).parse({ choose: "a 2" })).toBe("a 2");
+      });
+    
+      test("Replaces previous chosen variants", () => {
+        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a b" })).toBe("b");
+        expect(out.variant({ a: "a", b: "b" }).parse({ choose: ["a", "b"] })).toBe("b");
+      });
+    
+      test("Handles compound variants", () => {
+        expect(out.variant({ "a b": "a b" }).parse({ choose: "a" })).toBe("");
+        expect(out.variant({ "a b": "a b" }).parse({ choose: "b" })).toBe("");
+        expect(out.variant({ "a b": "a b" }).parse({ choose: "a b" })).toBe("a b");
+      });
+    });
   });
 });
 

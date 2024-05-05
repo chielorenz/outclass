@@ -149,7 +149,7 @@ class Out {
     }
 
     // Retrieve and merge all choices
-    for (const choice of this.#choices) {
+    for (const choice of choices) {
       const choices = flat(choice)
         .filter((c) => typeof c === "string")
         .join(" ")
@@ -221,4 +221,3 @@ class Out {
 
 const out = new Out();
 export { out };
-export default out;
