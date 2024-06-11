@@ -30,7 +30,7 @@
     "atomic css",
     "utility-first css"
   ],
-  "author": "b1n01",
+  "author": "chielorenz",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.2",
