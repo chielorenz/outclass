@@ -1,7 +1,7 @@
 {
   "name": "outclass",
   "version": "0.1.0",
-  "description": "A CSS class string manipulation tool",
+  "description": "CSS class manipulation tool",
   "main": "lib/index.cjs",
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
@@ -26,7 +26,6 @@
   },
   "keywords": [
     "class",
-    "className",
     "atomic css",
     "utility-first css"
   ],
