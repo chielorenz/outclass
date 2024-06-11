@@ -12,20 +12,19 @@ export type Map = Partial<{
   variant: Nested<Variant>;
   choose: Nested<Input>;
 }>;
-type Nested<Type> = Type | Nested<Type>[];
+export type Nested<Type> = Type | Nested<Type>[];
 
-function flat<Type>(
-  ...items: Nested<Type | undefined | null | boolean>[]
-): Type[] {
-  const values: Type[] = [];
-  for (const item of items) {
-    if (item instanceof Array) {
-      values.push(...flat(...item));
-    } else if (item && typeof item !== "boolean") {
-      values.push(item);
-    }
-  }
-  return values;
+function flat<Type>(...items: Nested<Type>[]): Type[] {
+  // @ts-ignore
+  return items.flat(Infinity);
+}
+
+function tokenize(...items: Nested<Input>[]): string[] {
+  return flat(items)
+    .filter((item) => item && typeof item !== "boolean")
+    .join(" ")
+    .split(" ")
+    .filter((item) => item.trim().length);
 }
 
 class Out {
@@ -42,18 +41,19 @@ class Out {
     out.#choices = [...this.#choices];
     return out;
   }
+
   #processMaps(...maps: Nested<Map>[]): void {
     let type: keyof Map;
     for (const map of flat(maps)) {
       for (type in map) {
         if (type === "apply") {
-          this.#patches.push(...flat(map.apply));
+          this.#patches.push(...flat(map.apply!));
         } else if (type === "variant") {
-          this.#variants.push(...flat(map.variant));
+          this.#variants.push(...flat(map.variant!));
         } else if (type === "choose") {
-          this.#choices.push(...flat(map.choose));
+          this.#choices.push(...tokenize(map.choose));
         } else {
-          this.#actions.push({ type, value: flat(map[type]) });
+          this.#actions.push({ type, value: tokenize(map[type]) });
         }
       }
     }
@@ -61,19 +61,19 @@ class Out {
 
   add(...items: Nested<Input>[]): Out {
     const out = this.#clone();
-    out.#actions.push({ type: "add", value: flat(items) });
+    out.#actions.push({ type: "add", value: tokenize(items) });
     return out;
   }
 
   remove(...items: Nested<Input>[]): Out {
     const out = this.#clone();
-    out.#actions.push({ type: "remove", value: flat(items) });
+    out.#actions.push({ type: "remove", value: tokenize(items) });
     return out;
   }
 
   set(...items: Nested<Input>[]): Out {
     const out = this.#clone();
-    out.#actions.push({ type: "set", value: flat(items) });
+    out.#actions.push({ type: "set", value: tokenize(items) });
     return out;
   }
 
@@ -97,20 +97,20 @@ class Out {
 
   choose(...choices: Nested<Input>[]): Out {
     const out = this.#clone();
-    out.#choices.push(...flat(choices));
+    out.#choices.push(...tokenize(choices));
     return out;
   }
 
   parse(...params: Array<Nested<Map> | Nested<Input>>): string {
     const out = this.#clone();
     const classes = new Set<string>();
-    const choices: string[] = [];
+    const choices = new Map<Variant, string>();
 
     for (const param of flat(params)) {
-      if (typeof param === "object") {
+      if (typeof param === "object" && param !== null) {
         out.#processMaps(param);
       } else {
-        out.#actions.push({ type: "add", value: [param] });
+        out.#actions.push({ type: "add", value: tokenize(param) });
       }
     }
 
@@ -124,10 +124,7 @@ class Out {
     // Parse actions
     while (out.#actions.length > 0) {
       const action = out.#actions.shift()!;
-      const items = action.value
-        .join(" ")
-        .split(" ")
-        .filter((i) => i.trim().length);
+      const items = action.value;
       if (action.type === "remove") {
         for (const item of items) classes.delete(item);
       } else {
@@ -139,34 +136,32 @@ class Out {
     }
 
     // Merge choices
-    while (out.#choices.length > 0) {
-      const flatChoice = out.#choices.pop()!.split(" ");
+    for (const choice of out.#choices) {
       for (const variant of out.#variants) {
-        const keys = Object.keys(variant);
-        for (const key of keys) {
-          if (key.split(" ").every((k) => choices.includes(k))) {
-            for (const otherKey of keys) {
-              if (!otherKey.includes(" ") && otherKey != key) {
-                flatChoice.slice(flatChoice.indexOf(otherKey));
-              }
-            }
+        if (Object.keys(variant).includes(choice)) {
+          choices.set(variant, choice);
+          break;
+        }
+      }
+    }
+    const values = [...choices.values()];
+    for (const variant of out.#variants) {
+      for (const key of Object.keys(variant)) {
+        const isCompound = key.includes(" ");
+        if (isCompound) {
+          if (tokenize(key).every((k) => values.includes(k))) {
+            choices.set(variant, key);
+            break;
           }
         }
       }
-      choices.push(...flatChoice);
     }
 
     // Apply variants
     for (const variant of out.#variants) {
-      const selection: string[] = [];
-      for (const [key, value] of Object.entries(variant)) {
-        const keys = key.split(" ");
-        if (keys.every((p) => choices.includes(p))) {
-          selection[keys.length] = value;
-        }
-      }
-      if (selection.length > 0) {
-        const items = selection.pop()!.split(" ");
+      const choice = choices.get(variant);
+      if (choice) {
+        const items = tokenize(variant[choice]);
         for (const item of items) classes.add(item);
       }
     }

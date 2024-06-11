@@ -310,7 +310,8 @@ describe("The with method", () => {
     test("Handles compound variants", () => {
       expect(out.variant({ "a b": "a b" }).with({ choose: "a" }).parse()).toBe("");
       expect(out.variant({ "a b": "a b" }).with({ choose: "b" }).parse()).toBe("");
-      expect(out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse()).toBe("a b");
+      expect(out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse()).toBe("");
+      expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).with({ choose: "a b" }).parse()).toBe("a ab");
     });
   });
 });
@@ -496,7 +497,8 @@ describe("The parse method", () => {
       test("Handles compound variants", () => {
         expect(out.variant({ "a b": "a b" }).parse({ choose: "a" })).toBe("");
         expect(out.variant({ "a b": "a b" }).parse({ choose: "b" })).toBe("");
-        expect(out.variant({ "a b": "a b" }).parse({ choose: "a b" })).toBe("a b");
+        expect(out.variant({ "a b": "a b" }).parse({ choose: "a b" })).toBe("");
+        expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).parse({ choose: "a b" })).toBe("a ab");
       });
     });
   });
@@ -548,6 +550,7 @@ describe("The choose method", () => {
   test("Handles compound variants", () => {
     expect(out.variant({ "a b": "a b" }).choose("a").parse()).toBe("");
     expect(out.variant({ "a b": "a b" }).choose("b").parse()).toBe("");
-    expect(out.variant({ "a b": "a b" }).choose("a b").parse()).toBe("a b");
+    expect(out.variant({ "a b": "a b" }).choose("a b").parse()).toBe("");
+    expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).choose("a b").parse()).toBe("a ab");
   });
 });
