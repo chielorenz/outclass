@@ -72,7 +72,9 @@ import { out } from "outclass";
 
 ## Documentation
 
-Outclass lets you to create strings of CSS classes. Internally it keeps a list of classes and offers methods to manipulate it. The `parse` method returns a single string consisting of a space-separated list of unique CSS classes, which can be used in the `class` attribute of HTML elements.
+Outclass lets you to create strings of CSS classes. Internally it keeps a list of classes and offers methods to
+manipulate it. The `parse` method returns a single string consisting of a space-separated list of unique CSS classes,
+which can be used in the `class` attribute of HTML elements.
 
 There are two main ways of use, which can be combined as desired:
 
@@ -162,7 +164,8 @@ out
 // p-2 bg-violet-500
 ```
 
-Variants can have _compound_ options, which are option with multiple names separated by spaces. Compound options are selected when all names are passed to the `choose` method:
+Variants can have _compound_ options, which are option with multiple names separated by spaces. Compound options are
+selected when all names are passed to the `choose` method:
 
 ```ts
 out
@@ -174,7 +177,8 @@ out
 // p-2 bg-violet-500 rounded
 ```
 
-The `choose` method can be called multiple times to change the selected variants, this means that it can be used to specify the default variant and then change it later:
+The `choose` method can be called multiple times to change the selected variants, this means that it can be used to
+specify the default variant and then change it later:
 
 ```ts
 out
@@ -187,7 +191,8 @@ out
 
 ### Patching
 
-The `apply` method is used to apply patches to the list of classes. Patches are evaluated last, after manipulation of the main object are, and the order they are applied is kept. A patch simply is a `out` object:
+The `apply` method is used to apply patches to the list of classes. Patches are evaluated last, after manipulation of
+the main object are, and the order they are applied is kept. A patch simply is a `out` object:
 
 ```ts
 const patch = out.remove("m-2").add("m-4");
@@ -201,7 +206,8 @@ out.variant({ small: "p-2", large: "p-4" }).choose("large").apply(pick).parse();
 
 ### All in a single call
 
-All functionality can be combined in a single call to the `with` method, which takes an object where each key is a method name and the value is the arguments to pass to that method:
+All functionality can be combined in a single call to the `with` method, which takes an object where each key is a
+method name and the value is the arguments to pass to that method:
 
 ```ts
 // All in a single call
@@ -237,7 +243,8 @@ out.set("flex").parse({
 
 ## TailwindCSS
 
-Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS. To enable VS Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/settings.json`:
+Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS. To enable VS
+Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/settings.json`:
 
 ```jsonc
 {
@@ -253,4 +260,5 @@ Outclass is especially useful when used with atomic or utility-first CSS framewo
 
 ### Acknowledgements
 
-Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva) and [clsx](https://github.com/lukeed/clsx).
+Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva) and
+[clsx](https://github.com/lukeed/clsx).
