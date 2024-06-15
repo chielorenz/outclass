@@ -1,6 +1,5 @@
 - [ ] Test that applied patches also applies variants and choices
 - [ ] Implement a plugin system
-- [ ] Drop CommonJs support
 - [ ] Implement typed variants:
 
   ```ts

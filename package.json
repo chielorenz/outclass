@@ -1,9 +1,8 @@
 {
   "name": "outclass",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CSS class manipulation tool",
-  "main": "lib/index.cjs",
-  "module": "lib/index.mjs",
+  "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
   "files": [
@@ -13,15 +12,13 @@
     "dev": "jest --watch",
     "test": "jest",
     "build:clean": "rm -rf lib/*",
-    "build:esm": "tsc -p tsconfig.esm.json && mv lib/index.js lib/index.mjs",
-    "build:cjs": "tsc -p tsconfig.cjs.json && mv lib/index.js lib/index.cjs",
-    "build": "npm run build:clean && npm run build:cjs && npm run build:esm"
+    "build:move": "tsc && mv lib/index.js lib/index.js",
+    "build": "npm run build:clean && tsc && npm run build:move"
   },
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.cjs"
+      "import": "./lib/index.js"
     }
   },
   "keywords": [
