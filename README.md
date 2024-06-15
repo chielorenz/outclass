@@ -1,146 +1,117 @@
 # Outclass
 
+![npm dependencies](https://img.shields.io/badge/dependencies-0-blue?style=flat-square)
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/outclass?style=flat-square)
+![npm license](https://img.shields.io/npm/l/outclass?style=flat-square&color=blue)
+
 > Currently in pre-release version, expect breaking changes.
 
-Outclass is a CSS class string manipulation tool, it allows you to define classes in a dynamic and composable way. For example:
+Outclass is a CSS class manipulation tool. It can be used to create strings of CSS classes dynamically, for example:
 
 ```ts
 import { out } from "outclass";
 
-out.parse("flex rounded", "p-2");
-// flex rounded p-2
+// Generates a string of unique class names
+out.parse("flex", "rounded", "flex");
+// flex rounded
 
-out.parse([
-    "w-32 h-32"
-    isActive ? "cursor-pointer" : "cursor-not-allowed",
-    isDirty && "border-2",
-]);
-// w-32 h-32 cursor-pointer, when isActive is true and isDirty is false
+// Implements the builder pattern
+out.set("blur w-4").remove("w-4").add("shadow w-2").parse();
+// blur shadow w-2
 
-const customStyle = out.remove("p-2").add("p-4");
-out.apply(customStyle).parse("flex p-2");
-// flex p-4
+// Has a variants system
+out.variant({ sm: "p-2", lg: "p-4" }).choose("sm").parse();
+// p-2
+
+// Is patchable
+const patch = out.remove("m-2").add("m-4");
+out.set("border m-2").apply(patch).parse();
+// border m-4
+
+// All in a single call
+out.parse({
+  add: "m-4",
+  apply: patch,
+  variant: { sm: "p-2", lg: "p-4" },
+  choose: "sm",
+});
+// m-4 p-2
 ```
-
-Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS and UnoCSS, read the [documentation](#documentation) or try the [playground on CodeSandbox](https://codesandbox.io/p/sandbox/github/b1n01/outclass-playground?file=app%2Fpage.tsx).
-
-## Main features
-
-- Zero dependencies
-- Framework agnostic
-- Fully typed
-- Fully tested
-- Tiny: ~ 1KB minified + brotli
 
 ## Installation
 
-### Node
+Outclass is available on [npm](https:://npm.org/outclass) as ECMAScript module (ESM) and works on any JavaScript
+runtime:
 
 ```bash
-npm  add outclass
-yarn add outclass
+# Node.js
+npm add outclass
 pnpm add outclass
-```
+yarn add outclass
 
-### Bun
+# Deno
+deno add npm:outclass
 
-```bash
+# Bun
 bun add outclass
 ```
 
-### Deno
-
-```ts
-import { out } from "https://esm.sh/outclass";
-```
-
-### In the browser
+And in the browser:
 
 ```html
 <script type="module">
   import { out } from "https://esm.sh/outclass";
-  out.parse("flex");
 </script>
+```
+
+The `out` object can be imported from the `outclass` module:
+
+```ts
+import { out } from "outclass";
 ```
 
 ## Documentation
 
-All methods are exposed by the `out` object, which can be imported from the `outclass` module:
+Outclass lets you to create strings of CSS classes. Internally it keeps a list of classes and offers methods to manipulate it. The `parse` method returns a single string consisting of a space-separated list of unique CSS classes, which can be used in the `class` attribute of HTML elements.
+
+There are two main ways of use, which can be combined as desired:
+
+- A [builder](#builder): to programmatically add and remove classes
+- A [variant system](#variants): to specify and select style variants
+
+### Inputs
+
+Most methods takes as arguments multiple strings and arrays of strings (infinitely nested):
 
 ```ts
-// Local esm module
-import { out } from "outclass";
-
-// Remote esm module
-import { out } from "https://esm.sh/outclass";
-
-// CommonJs
-const { out } = require("outclass");
+out.parse("flex", ["grow"], [["p-2"]]);
+// flex grow p-2
 ```
 
-### Parsing
-
-Generally speaking the core functionality is converting some input into a single string consisting of a space-separated list of unique CSS classes, where the order of the input is preserved and, in case of duplicate values, only the first instance is kept.
-
-For this purpose there is the `parse` method. It takes strings and arrays of strings as input, also handling nested values:
+Each input string is splitted into single classes on white-spaces:
 
 ```ts
-out.parse("flex p-2");
-// flex p-2
-
-out.parse("rounded", "m-4");
-// rounded m-4
-
-out.parse(["border-2", "h-8"]);
-// border-2 h-8
-
-out.parse(["drop-shadow"], ["opacity-50"]);
-// drop-shadow opacity-50
-
-out.parse([["bg-cover"]]);
-// bg-cover
-```
-
-It also takes null, undefined and boolean values, empty strings and empty arrays, so it can be used with the `&&` operator and `?.` optional chaining:
-
-```ts
-out.parse("", null, undefined, true, false, []);
+out.add("flex grow").remove("grow").remove("flex").parse();
 // ""
+```
 
+It only understand string inputs, but for convenience it also takes, `null`, `undefined` and `boolean` values, so it
+can be used with the `&&` operator and `?.` optional chaining:
+
+```ts
+const isMuted = false;
 const props = { classes: "bg-slate-700" };
-out.parse(isMuted && "cursor-not-allowed", props?.classes);
-// cursor-not-allowed bg-slate-700, when isMuted is true
+out.parse([
+  isMuted && "cursor-not-allowed",
+  props?.classes,
+  [null, undefined, false, true],
+]);
+// bg-slate-700 flex grow
 ```
 
-### Building
+### Immutability
 
-The `out` object is also a builder, which meas it offers some **"actions"** methods to dynamically build string of classes: `add`, `remove` and `set`, respectively to add, remove and overwrite classes.
-
-```ts
-out.add("flex p-2").remove("p-2").parse();
-// flex
-
-out.add("h-12 bg-violet-400").set("rounded").parse();
-// rounded
-```
-
-Actions accepts the same arguments as the `parse` method does:
-
-```ts
-out.add(["clear-right", ["columns-2"]]).parse();
-// clear-right columns-2
-```
-
-Combining actions methods with the `parse` method results in the parse method to act as the `add` method:
-
-```ts
-out.add("place-self-start").parse("m-4");
-// place-self-start m-4
-```
-
-#### Immutability
-
-Actions methods always return a new instance of `out`, making it **immutable**:
+The `out` object is immutable, each call to its methods returns a new instance:
 
 ```ts
 const style = out.add("text-end");
@@ -152,68 +123,121 @@ style.parse();
 // text-end
 ```
 
-This, as already shown in the examples, allows for method chaining:
+This makes it more convenient as you can use it directly in method chaining without the need to create new instances
+of it every time:
 
 ```ts
-out.set("box-content p-4").add("inline").apply(out.remove("p-4")).parse();
-// box-content inline
+out.set("box-content p-4").apply(out.remove("p-4")).parse();
+// box-content
 ```
 
-### Compose
+### Using the builder<a id="builder"></a>
 
-Object of type `out` can be composed together using the `apply` method.
-
-```ts
-const style = out.add("tracking-wide");
-out.apply(style).parse();
-// tracking-wide
-```
-
-Applied classes are queued up and evaluated after the classes of the main object:
+The `out` object implements the builder pattern, the `add` and `remove` methods add and remove classes respectively,
+the `set` method replaces the current list of classes with a new one:
 
 ```ts
-out.apply(out.remove("m-2")).add("self-end m-2").parse();
-// self-end
-```
-
-Composability is not limited to one level of depth:
-
-```ts
-out.apply(out.apply(out.add("flex"))).parse();
+out.add("flex").parse();
 // flex
+
+out.add("grow p-2").remove("grow").parse();
+// p-2
+
+out.add("flex").set("p-2").parse();
+// p-2
 ```
 
-### Actions map
+### Using variants<a id="variants"></a>
 
-To apply multiple actions in a single method call you can use the `with` method. It takes an "actions map" which is an object that contains multiple actions:
+The `variant` method is used to specify variants of style, for example a _size_ variant can have options _small_ and
+_large_ and a _color_ variant can have options _violet_ and _blue_. The `choose` method selects which variants to use.
+Only one option per variant can be selected at a time:
 
 ```ts
 out
-  .with({
-    set: "space-x-4",
-    add: "flex-wrap overflow-clip",
-    remove: "flex-wrap",
-    apply: out.add("order-4"),
-  })
+  .variant({ small: "p-2", large: "p-4" })
+  .variant({ violet: "bg-violet-500", blue: "bg-blue-500" })
+  .choose("small blue")
   .parse();
-// space-x-4 overflow-clip order-4
+// p-2 bg-violet-500
 ```
 
-Actions map can also be used as parameters of the `parse` method:
+Variants can have _compound_ options, which are option with multiple names separated by spaces. Compound options are selected when all names are passed to the `choose` method:
 
 ```ts
-out.parse({ add: "grow", apply: out.add("order-8")}):
-// grow order-8
+out
+  .variant({ small: "p-2", large: "p-4" })
+  .variant({ violet: "bg-violet-500", blue: "bg-blue-500" })
+  .variant({ "small violet": "rounded" })
+  .choose("small violet")
+  .parse();
+// p-2 bg-violet-500 rounded
 ```
 
-## Integrations
+The `choose` method can be called multiple times to change the selected variants, this means that it can be used to specify the default variant and then change it later:
 
-### VS Code TailwindCSS IntelliSense
+```ts
+out
+  .variant({ small: "p-2", large: "p-4" })
+  .choose("small")
+  .choose("large", "small")
+  .parse();
+// p-2
+```
 
-To enable TailwindCSS IntelliSense on Outclass methods calls, add this regex to your `.vscode/settings.json`:
+### Patching
 
-<details>
-<summary>Open snippet</summary>
+The `apply` method is used to apply patches to the list of classes. Patches are evaluated last, after manipulation of the main object are, and the order they are applied is kept. A patch simply is a `out` object:
+
+```ts
+const patch = out.remove("m-2").add("m-4");
+out.set("border m-2").apply(patch).parse();
+// border m-4
+
+const pick = out.choose("small");
+out.variant({ small: "p-2", large: "p-4" }).choose("large").apply(pick).parse();
+// p-2
+```
+
+### All in a single call
+
+All functionality can be combined in a single call to the `with` method, which takes an object where each key is a method name and the value is the arguments to pass to that method:
+
+```ts
+// All in a single call
+out
+  .with({
+    set: "grid grow"
+    remove: "grid",
+    add: "flex",
+    apply: out.choose("small"),
+    variant: { sm: "p-2", lg: "p-4" },
+    choose: "large",
+  })
+  .parse();
+// grow flex p-4
+```
+
+### The `parse` method
+
+The `parse` can be called with no arguments to get the current list of classes, but it can also be called with a
+string, in which case it acts as the `add` method, or with an object, in which case it acts as the `with` method:
+
+```ts
+out.set("flex").parse("grow");
+// flex grow
+
+out.set("flex").parse({
+  add: "m-4",
+  variant: { sm: "p-2", lg: "p-4" },
+  choose: "sm",
+});
+// flex m-4 p-2
+```
+
+## TailwindCSS
+
+Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS. To enable VS Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/settings.json`:
 
 ```jsonc
 {
@@ -227,4 +251,6 @@ To enable TailwindCSS IntelliSense on Outclass methods calls, add this regex to 
 }
 ```
 
-</details>
+### Acknowledgements
+
+Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva) and [clsx](https://github.com/lukeed/clsx).
