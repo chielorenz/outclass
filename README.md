@@ -40,7 +40,7 @@ out.parse({
 
 ## Installation
 
-Outclass is available on [npm](https:://npm.org/outclass) as ECMAScript module (ESM) and works on any JavaScript
+Outclass is available on [npm](https://npm.org/outclass) as ECMAScript module (ESM) and works on any JavaScript
 runtime:
 
 ```bash
