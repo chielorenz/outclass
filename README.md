@@ -1,8 +1,8 @@
 # Outclass
 
-![npm dependencies](https://img.shields.io/badge/dependencies-0-blue?style=flat-square)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/outclass?style=flat-square)
-![npm license](https://img.shields.io/npm/l/outclass?style=flat-square&color=blue)
+![dependencies](https://flat.badgen.net/bundlephobia/dependency-count/outclas?color=blue)
+![bundle size](https://flat.badgen.net/bundlephobia/minzip/outclass)
+![types](https://flat.badgen.net/npm/types/outclass?color=blue)
 
 > Currently in pre-release version, expect breaking changes.
 
