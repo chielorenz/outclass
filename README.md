@@ -251,7 +251,7 @@ Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/setti
   "tailwindCSS.experimental.classRegex": [
     // Enable IntelliSense on Outclass method calls outside "className" and "class" attributes
     [
-      "\\.(?:parse|add|remove|set|with)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*",
+      "\\.(?:parse|add|remove|set|with|variant)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*",
       "[\"'`]([^\"'`]*)[\"'`]"
     ]
   ]
