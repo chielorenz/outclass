@@ -52,7 +52,7 @@ class Out {
           this.#variants.push(...flat(map.variant!));
         } else if (type === "choose") {
           this.#choices.push(...tokenize(map.choose));
-        } else {
+        } else if (["set", "add", "remove"].includes(type)) {
           this.#actions.push({ type, value: tokenize(map[type]) });
         }
       }

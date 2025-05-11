@@ -330,6 +330,10 @@ describe("The parse method", () => {
     expect(out.parse([, null, undefined, true, false, "", []], [{}])).toBe("");
   });
 
+  test("Handles array-like objects as Maps", () => {
+    expect(out.parse({ add: "a" , 0: "b" })).toBe("a");
+  });
+
   test("Handles strings", () => {
     expect(out.parse("a")).toBe("a");
     expect(out.parse("a", "b")).toBe("a b");
