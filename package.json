@@ -9,7 +9,7 @@
     "lib"
   ],
   "scripts": {
-    "dev": "jest --watch",
+    "dev": "jest --watchAll",
     "test": "jest",
     "build:clean": "rm -rf lib/*",
     "build:move": "tsc && mv lib/index.js lib/index.js",
