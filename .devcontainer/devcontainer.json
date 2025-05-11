@@ -1,0 +1,9 @@
+{
+	"name": "Outclass devcontainer",
+	"dockerComposeFile": "../docker-compose.yaml",
+	"service": "lib",
+	"workspaceFolder": "/app",
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {}
+	}
+}

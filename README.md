@@ -258,7 +258,34 @@ Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/setti
 }
 ```
 
-### Acknowledgements
+## Contributing
+
+Run the docker development container:
+
+```bash 
+docker compose up -d
+```
+
+This will create an `outclass` container and install node dependencies.
+
+Once the container is running, you can start the development server which will watch for changes in the code and run tests:
+
+```bash
+docker exec -it outclass npm run dev
+```
+
+To build the library:
+
+```bash
+docker exec -it outclass npm run build
+```
+
+### VSCode
+
+The project includes a devcontainer configuration for VSCode. To use it, open the project in VSCode and select
+"Reopen in Container" from the command palette.
+
+## Acknowledgements
 
 Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva) and
 [clsx](https://github.com/lukeed/clsx).
