@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            // Run debug REPL in a terminal and attach debugger
+            "name": "Debug REPL",
+            "command": "npm run debug",
+            "request": "launch",
+            "type": "node-terminal"
+        }
+    ]
+}
