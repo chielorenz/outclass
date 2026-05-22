@@ -413,7 +413,7 @@ describe("The parse method", () => {
     expect(out.parse([, null, undefined, true, false, "", []], [{}])).toBe("");
   });
 
-  test("Handles array-like objects as Maps", () => {
+  test("Handles array-like objects as Defs", () => {
     expect(out.parse({ add: "a", 0: "b" })).toBe("a");
   });
 
@@ -434,7 +434,7 @@ describe("The parse method", () => {
     expect(out.parse("  a  b  ")).toBe("a b");
   });
 
-  describe("Handles Maps", () => {
+  describe("Handles Defs", () => {
     test("Keeps actions order", () => {
       expect(out.parse({ set: "a", remove: "a" })).toBe("");
       expect(out.parse({ remove: "a", set: "a" })).toBe("a");
@@ -709,15 +709,15 @@ describe("Deeply nested inputs", () => {
 });
 
 describe("Mixed parse params", () => {
-  test("Combines maps and inputs in a single call", () => {
+  test("Combines defs and inputs in a single call", () => {
     expect(out.parse({ add: "a" }, "b", { add: "c" })).toBe("a b c");
   });
 
-  test("Keeps order across maps and inputs", () => {
+  test("Keeps order across defs and inputs", () => {
     expect(out.parse("a", { set: "b" }, "c")).toBe("b c");
   });
 
-  test("Handles maps and inputs interleaved with patches", () => {
+  test("Handles defs and inputs interleaved with patches", () => {
     expect(out.parse({ set: "a" }, "b", { apply: out.remove("a") })).toBe("b");
   });
 });

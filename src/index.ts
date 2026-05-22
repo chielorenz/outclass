@@ -2,7 +2,9 @@ type Input = string | undefined | null | boolean;
 
 type Variant = { [k: string]: string };
 
-type Map = Partial<{
+type Mod = (v: string) => string;
+
+type Def = Partial<{
   set: Nested<Input>;
   add: Nested<Input>;
   remove: Nested<Input>;
@@ -11,8 +13,6 @@ type Map = Partial<{
   choose: Nested<Input>;
   use: Nested<Mod>;
 }>;
-
-type Mod = (v: string) => string;
 
 type Op =
   | { type: "set"; value: string[] }
@@ -40,18 +40,18 @@ function tokenize(items: Nested<Input>): string[] {
   return tokens;
 }
 
-function opsFromMap(map: Map, ops: Op[]): void {
-  for (const type in map) {
+function opsFromDef(def: Def, ops: Op[]): void {
+  for (const type in def) {
     if (type === "apply")
-      each(map.apply!, (value) => ops.push({ type: "apply", value }));
+      each(def.apply!, (value) => ops.push({ type: "apply", value }));
     else if (type === "variant")
-      each(map.variant!, (v) => ops.push({ type: "variant", value: v }));
+      each(def.variant!, (v) => ops.push({ type: "variant", value: v }));
     else if (type === "use")
-      each(map.use!, (value) => ops.push({ type: "use", value }));
+      each(def.use!, (value) => ops.push({ type: "use", value }));
     else if (type === "choose")
-      ops.push({ type: "choose", value: tokenize(map.choose) });
+      ops.push({ type: "choose", value: tokenize(def.choose) });
     else if (type === "set" || type === "add" || type === "remove")
-      ops.push({ type, value: tokenize(map[type]) });
+      ops.push({ type, value: tokenize(def[type]) });
   }
 }
 
@@ -66,18 +66,18 @@ function parseOps(ops: Op[]): string {
     else if (op.type === "use") mods.push(op.value);
   }
 
-  const selected = new globalThis.Map<Variant, string>();
-  const compiled = new globalThis.Map<
+  const selected = new Map<Variant, string>();
+  const compiled = new Map<
     Variant,
     {
-      values: globalThis.Map<string, string[]>;
+      values: Map<string, string[]>;
       compound: Array<{ choice: string; keys: string[] }>;
     }
   >();
 
   for (const variant of variants) {
     if (!compiled.has(variant)) {
-      const values = new globalThis.Map<string, string[]>();
+      const values = new Map<string, string[]>();
       const compound: Array<{ choice: string; keys: string[] }> = [];
       for (const choice in variant) {
         values.set(choice, tokenize(variant[choice]));
@@ -194,9 +194,9 @@ class Out {
     return this.#chain(ops);
   }
 
-  with(...maps: Nested<Map>[]): Out {
+  with(...defs: Nested<Def>[]): Out {
     const ops: Op[] = [];
-    each(maps, (map) => opsFromMap(map, ops));
+    each(defs, (def) => opsFromDef(def, ops));
     return this.#chain(ops);
   }
 
@@ -206,13 +206,13 @@ class Out {
     return this.#chain(ops);
   }
 
-  parse(...params: Array<Nested<Map> | Nested<Input>>): string {
+  parse(...params: Array<Nested<Def> | Nested<Input>>): string {
     if (params.length === 0 && this.#parsed !== undefined) return this.#parsed;
 
     const ops = Out.#collect(this);
     each(params, (param) => {
       if (typeof param === "object" && param !== null)
-        opsFromMap(param as Map, ops);
+        opsFromDef(param as Def, ops);
       else ops.push({ type: "add", value: tokenize(param as Input) });
     });
 

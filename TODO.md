@@ -12,5 +12,3 @@
 
   // See https://stackoverflow.com/questions/69821826/typescript-string-autocomplete-object-structure-midway
   ```
-
-- [ ] Rename Map -> ? to avoid globalThis.Map collisions
