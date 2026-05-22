@@ -1,6 +1,6 @@
 type Input = string | undefined | null | boolean;
 
-type Variant = { [key: string]: string };
+type Variant = { [k: string]: string };
 
 type Map = Partial<{
   set: Nested<Input>;
@@ -9,7 +9,10 @@ type Map = Partial<{
   apply: Nested<Out>;
   variant: Nested<Variant>;
   choose: Nested<Input>;
+  use: Nested<Mod>;
 }>;
+
+type Mod = (v: string) => string;
 
 type Op =
   | { type: "set"; value: string[] }
@@ -17,7 +20,8 @@ type Op =
   | { type: "remove"; value: string[] }
   | { type: "apply"; value: Out }
   | { type: "variant"; value: Variant }
-  | { type: "choose"; value: string[] };
+  | { type: "choose"; value: string[] }
+  | { type: "use"; value: Mod };
 
 type Nested<Type> = Type | Nested<Type>[];
 
@@ -42,6 +46,8 @@ function opsFromMap(map: Map, ops: Op[]): void {
       each(map.apply!, (value) => ops.push({ type: "apply", value }));
     else if (type === "variant")
       each(map.variant!, (v) => ops.push({ type: "variant", value: v }));
+    else if (type === "use")
+      each(map.use!, (value) => ops.push({ type: "use", value }));
     else if (type === "choose")
       ops.push({ type: "choose", value: tokenize(map.choose) });
     else if (type === "set" || type === "add" || type === "remove")
@@ -53,6 +59,7 @@ function parseOps(ops: Op[]): string {
   const classes = new Set<string>();
   const variants: Variant[] = [];
   const choices: string[] = [];
+  const mods: Mod[] = [];
 
   for (const op of ops) {
     if (op.type === "set") {
@@ -62,6 +69,7 @@ function parseOps(ops: Op[]): string {
     else if (op.type === "remove") for (const v of op.value) classes.delete(v);
     else if (op.type === "variant") variants.push(op.value);
     else if (op.type === "choose") for (const v of op.value) choices.push(v);
+    else if (op.type === "use") mods.push(op.value);
   }
 
   const selected = new globalThis.Map<Variant, string>();
@@ -105,7 +113,7 @@ function parseOps(ops: Op[]): string {
     }
   }
 
-  return [...classes].join(" ");
+  return mods.reduce((v, mod) => mod(v), [...classes].join(" "));
 }
 
 class Out {
@@ -175,6 +183,12 @@ class Out {
   with(...maps: Nested<Map>[]): Out {
     const ops: Op[] = [];
     each(maps, (map) => opsFromMap(map, ops));
+    return this.#chain(ops);
+  }
+
+  use(...mods: Nested<Mod>[]): Out {
+    const ops: Op[] = [];
+    each(mods, (mod) => ops.push({ type: "use", value: mod }));
     return this.#chain(ops);
   }
 

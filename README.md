@@ -30,12 +30,13 @@ out.set("border m-2").apply(patch).parse();
 
 // All in a single call
 out.parse({
-  add: "m-4",
+  add: "m-2",
   apply: patch,
   variant: { sm: "p-2", lg: "p-4" },
   choose: "sm",
+  use: (cls) => cls.replace("m-4", "m-8"),
 });
-// m-4 p-2
+// m-8 p-2
 ```
 
 ## Installation
@@ -108,7 +109,7 @@ out.parse([
   props?.classes,
   [null, undefined, false, true],
 ]);
-// bg-slate-700 flex grow
+// bg-slate-700
 ```
 
 ### Immutability
@@ -159,7 +160,7 @@ Only one option per variant can be selected at a time:
 out
   .variant({ small: "p-2", large: "p-4" })
   .variant({ violet: "bg-violet-500", blue: "bg-blue-500" })
-  .choose("small blue")
+  .choose("small violet")
   .parse();
 // p-2 bg-violet-500
 ```
@@ -204,6 +205,22 @@ out.variant({ small: "p-2", large: "p-4" }).choose("large").apply(pick).parse();
 // p-2
 ```
 
+### Using modifiers
+
+The `use` method takes a modifier function that intercepts the final space-separated string of classes just before it is returned. This is extremely useful to integrate tools like `tailwind-merge` or to apply custom transformations:
+
+```ts
+out
+  .set("btn bg-primary text-white")
+  .use((cls) => cls.replaceAll("primary", "secondary"))
+  .parse();
+// btn bg-secondary text-white
+
+import { twMerge } from "tailwind-merge";
+out.set("p-2 p-4").use(twMerge).parse();
+// p-4
+```
+
 ### All in a single call
 
 All functionality can be combined in a single call to the `with` method, which takes an object where each key is a
@@ -213,15 +230,15 @@ method name and the value is the arguments to pass to that method:
 // All in a single call
 out
   .with({
-    set: "grid grow"
+    set: "grid grow",
     remove: "grid",
     add: "flex",
-    apply: out.choose("small"),
-    variant: { sm: "p-2", lg: "p-4" },
+    variant: { small: "p-2", large: "p-4" },
     choose: "large",
+    use: (cls) => cls.replace("p-4", "p-8"),
   })
   .parse();
-// grow flex p-4
+// grow flex p-8
 ```
 
 ### The `parse` method
@@ -252,9 +269,9 @@ Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/setti
     // Enable IntelliSense on Outclass method calls outside "className" and "class" attributes
     [
       "\\.(?:parse|add|remove|set|with|variant)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*",
-      "[\"'`]([^\"'`]*)[\"'`]"
-    ]
-  ]
+      "[\"'`]([^\"'`]*)[\"'`]",
+    ],
+  ],
 }
 ```
 

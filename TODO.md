@@ -1,5 +1,4 @@
 - [ ] Test that applied patches also applies variants and choices
-- [ ] Implement a plugin system
 - [ ] Implement typed variants:
 
   ```ts
@@ -7,7 +6,7 @@
 
   function hello<Options extends string[]>(
     variants: Narrow<Options>,
-    defaultValue: Options[number]
+    defaultValue: Options[number],
   ): void {}
 
   hello(["Hello", "World"], "Hello");

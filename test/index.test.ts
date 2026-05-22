@@ -318,6 +318,17 @@ describe("The with method", () => {
     });
   });
 
+  describe("Takes a use action that", () => {
+    test("Applies modifiers", () => {
+      expect(
+        out
+          .set("a")
+          .with({ use: (v) => v.replace("a", "b") })
+          .parse(),
+      ).toBe("b");
+    });
+  });
+
   describe("Takes a choose action that", () => {
     test("Handles blank parameters", () => {
       expect(out.with({ choose: null }).parse()).toBe("");
@@ -546,6 +557,14 @@ describe("The parse method", () => {
       test("Takes Variants", () => {
         expect(out.parse({ variant: { a: "a" } })).toBe("");
         expect(out.parse({ variant: [{ a: "a" }, { b: "b" }] })).toBe("");
+      });
+    });
+
+    describe("Takes a use action that", () => {
+      test("Applies modifiers", () => {
+        expect(out.set("a").parse({ use: (v) => v.replace("a", "b") })).toBe(
+          "b",
+        );
       });
     });
 
@@ -778,5 +797,43 @@ describe("The choose method", () => {
     expect(
       out.variant({ a: "a" }, { b: "b", "a b": "ab" }).choose("a b").parse(),
     ).toBe("a ab");
+  });
+});
+
+describe("The use method", () => {
+  test("Applies a modifier to the output", () => {
+    expect(
+      out
+        .set("a b")
+        .use((v) => v.replace("a", "x"))
+        .parse(),
+    ).toBe("x b");
+  });
+
+  test("Applies multiple modifiers in order", () => {
+    expect(
+      out
+        .set("a b")
+        .use((v) => v.replace("a", "x"))
+        .use((v) => v.replace(" ", "-"))
+        .parse(),
+    ).toBe("x-b");
+  });
+
+  test("Accepts multiple parameters", () => {
+    expect(
+      out
+        .set("a b")
+        .use(
+          (v) => v.replace("a", "x"),
+          (v) => v.replace(" ", "-"),
+        )
+        .parse(),
+    ).toBe("x-b");
+  });
+
+  test("Works with patches", () => {
+    const patch = out.use((v) => v.replace("a", "x"));
+    expect(out.set("a").apply(patch).parse()).toBe("x");
   });
 });
