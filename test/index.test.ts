@@ -82,7 +82,9 @@ describe("The remove method", () => {
     expect(out.remove("").parse()).toBe("");
     expect(out.remove([]).parse()).toBe("");
     expect(out.remove(null, undefined, true, false, "", []).parse()).toBe("");
-    expect(out.remove([, null, undefined, true, false, "", []]).parse()).toBe("");
+    expect(out.remove([, null, undefined, true, false, "", []]).parse()).toBe(
+      "",
+    );
   });
 
   test("Handles strings", () => {
@@ -133,12 +135,17 @@ describe("The apply method", () => {
     expect(out.apply(out.set("a"), out.set("b")).parse()).toBe("b");
     expect(out.apply(out.set("a")).apply(out.set("b")).parse()).toBe("b");
   });
+
+  test("Evaluates nested applied Outclass", () => {
+    const patch = out.apply(out.set("a")).apply(out.remove("a").add("b"));
+    expect(out.apply(patch).parse()).toBe("b");
+  });
 });
 
 describe("The with method", () => {
   test("Handles blank parameters", () => {
     expect(out.with({}).parse()).toBe("");
-    expect(out.with({},{}).parse()).toBe("");
+    expect(out.with({}, {}).parse()).toBe("");
     expect(out.with([{}]).parse()).toBe("");
   });
 
@@ -156,7 +163,9 @@ describe("The with method", () => {
       expect(out.with({ set: false }).parse()).toBe("");
       expect(out.with({ set: "" }).parse()).toBe("");
       expect(out.with({ set: [] }).parse()).toBe("");
-      expect(out.with({ set: [, null, undefined, true, false, "", []] }).parse()).toBe("");
+      expect(
+        out.with({ set: [, null, undefined, true, false, "", []] }).parse(),
+      ).toBe("");
     });
 
     test("Handles strings", () => {
@@ -188,7 +197,9 @@ describe("The with method", () => {
       expect(out.with({ add: false }).parse()).toBe("");
       expect(out.with({ add: "" }).parse()).toBe("");
       expect(out.with({ add: [] }).parse()).toBe("");
-      expect(out.with({ add: [, null, undefined, true, false, "", []] }).parse()).toBe("");
+      expect(
+        out.with({ add: [, null, undefined, true, false, "", []] }).parse(),
+      ).toBe("");
     });
 
     test("Handles strings", () => {
@@ -220,7 +231,9 @@ describe("The with method", () => {
       expect(out.with({ remove: false }).parse()).toBe("");
       expect(out.with({ remove: "" }).parse()).toBe("");
       expect(out.with({ remove: [] }).parse()).toBe("");
-      expect(out.with({ remove: [, null, undefined, true, false, "", []] }).parse()).toBe("");
+      expect(
+        out.with({ remove: [, null, undefined, true, false, "", []] }).parse(),
+      ).toBe("");
     });
 
     test("Handles strings", () => {
@@ -231,9 +244,18 @@ describe("The with method", () => {
     test("Is idempotent", () => {
       expect(out.set("a").with({ remove: "a" }).parse()).toBe("");
       expect(out.set("a").with({ remove: "a a" }).parse()).toBe("");
-      expect(out.set("a").with({ remove: ["a", "a"] }).parse()).toBe("");
-      expect(out.set("a").with({ remove: "a" }, { remove: "a" }).parse()).toBe("");
-      expect(out.set("a").with({ remove: "a" }).with({ remove: "a" }).parse()).toBe("");
+      expect(
+        out
+          .set("a")
+          .with({ remove: ["a", "a"] })
+          .parse(),
+      ).toBe("");
+      expect(out.set("a").with({ remove: "a" }, { remove: "a" }).parse()).toBe(
+        "",
+      );
+      expect(
+        out.set("a").with({ remove: "a" }).with({ remove: "a" }).parse(),
+      ).toBe("");
     });
 
     test("Trims white spaces", () => {
@@ -254,31 +276,48 @@ describe("The with method", () => {
 
     test("Evaluates applied Outclass", () => {
       expect(out.with({ apply: out.set("a") }).parse()).toBe("a");
-      expect(out.set("a").with({ apply: out.remove("a") }).parse()).toBe("");
+      expect(
+        out
+          .set("a")
+          .with({ apply: out.remove("a") })
+          .parse(),
+      ).toBe("");
     });
 
     test("Evaluates applied Outclass last", () => {
-      expect(out.with({ apply: out.remove("a") }).set("a").parse()).toBe("");
+      expect(
+        out
+          .with({ apply: out.remove("a") })
+          .set("a")
+          .parse(),
+      ).toBe("");
     });
 
     test("Keeps the order of applied Outclass", () => {
-      expect(out.with({ apply: [out.set("a"), out.set("b")] }).parse()).toBe("b");
-      expect(out.with({ apply: out.set("a") }).with({ apply: out.set("b") }).parse()).toBe("b");
+      expect(out.with({ apply: [out.set("a"), out.set("b")] }).parse()).toBe(
+        "b",
+      );
+      expect(
+        out
+          .with({ apply: out.set("a") })
+          .with({ apply: out.set("b") })
+          .parse(),
+      ).toBe("b");
     });
   });
 
   describe("Takes a variant action that", () => {
     test("Handles blank parameters", () => {
-      expect(out.with({variant: {}}).parse()).toBe("");
-      expect(out.with({variant: [{}]}).parse()).toBe("");
+      expect(out.with({ variant: {} }).parse()).toBe("");
+      expect(out.with({ variant: [{}] }).parse()).toBe("");
     });
-  
+
     test("Takes Variants", () => {
-      expect(out.with({variant: { a: "a" }}).parse()).toBe("");
-      expect(out.with({variant: [{ a: "a" }, { b: "b" }]}).parse()).toBe("");
+      expect(out.with({ variant: { a: "a" } }).parse()).toBe("");
+      expect(out.with({ variant: [{ a: "a" }, { b: "b" }] }).parse()).toBe("");
     });
   });
- 
+
   describe("Takes a choose action that", () => {
     test("Handles blank parameters", () => {
       expect(out.with({ choose: null }).parse()).toBe("");
@@ -287,31 +326,64 @@ describe("The with method", () => {
       expect(out.with({ choose: false }).parse()).toBe("");
       expect(out.with({ choose: "" }).parse()).toBe("");
       expect(out.with({ choose: null }).parse()).toBe("");
-      expect(out.with({ choose: [, null, undefined, true, false, "", []] }).parse()).toBe("");
+      expect(
+        out.with({ choose: [, null, undefined, true, false, "", []] }).parse(),
+      ).toBe("");
     });
-  
+
     test("Handles strings", () => {
-      expect(out.with({ choose: "a"} ).parse()).toBe("");
+      expect(out.with({ choose: "a" }).parse()).toBe("");
       expect(out.with({ choose: ["a", "b"] }).parse()).toBe("");
     });
-  
+
     test("Chooses variants", () => {
       expect(out.variant({ a: "a" }).with({ choose: "a" }).parse()).toBe("a");
-      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).parse()).toBe("a");
-      expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).with({ choose: "a 2" }).parse()).toBe("a 2");
+      expect(
+        out.variant({ a: "a", b: "b" }).with({ choose: "a" }).parse(),
+      ).toBe("a");
+      expect(
+        out
+          .variant({ a: "a", b: "b" }, { 1: "1", 2: "2" })
+          .with({ choose: "a 2" })
+          .parse(),
+      ).toBe("a 2");
     });
-  
+
     test("Replaces previous chosen variants", () => {
-      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a b" }).parse()).toBe("b");
-      expect(out.variant({ a: "a", b: "b" }).with({ choose: ["a", "b"] }).parse()).toBe("b");
-      expect(out.variant({ a: "a", b: "b" }).with({ choose: "a" }).with({ choose: "b" }).parse()).toBe("b");
+      expect(
+        out.variant({ a: "a", b: "b" }).with({ choose: "a b" }).parse(),
+      ).toBe("b");
+      expect(
+        out
+          .variant({ a: "a", b: "b" })
+          .with({ choose: ["a", "b"] })
+          .parse(),
+      ).toBe("b");
+      expect(
+        out
+          .variant({ a: "a", b: "b" })
+          .with({ choose: "a" })
+          .with({ choose: "b" })
+          .parse(),
+      ).toBe("b");
     });
-  
+
     test("Handles compound variants", () => {
-      expect(out.variant({ "a b": "a b" }).with({ choose: "a" }).parse()).toBe("");
-      expect(out.variant({ "a b": "a b" }).with({ choose: "b" }).parse()).toBe("");
-      expect(out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse()).toBe("");
-      expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).with({ choose: "a b" }).parse()).toBe("a ab");
+      expect(out.variant({ "a b": "a b" }).with({ choose: "a" }).parse()).toBe(
+        "",
+      );
+      expect(out.variant({ "a b": "a b" }).with({ choose: "b" }).parse()).toBe(
+        "",
+      );
+      expect(
+        out.variant({ "a b": "a b" }).with({ choose: "a b" }).parse(),
+      ).toBe("");
+      expect(
+        out
+          .variant({ a: "a" }, { b: "b", "a b": "ab" })
+          .with({ choose: "a b" })
+          .parse(),
+      ).toBe("a ab");
     });
   });
 });
@@ -331,7 +403,7 @@ describe("The parse method", () => {
   });
 
   test("Handles array-like objects as Maps", () => {
-    expect(out.parse({ add: "a" , 0: "b" })).toBe("a");
+    expect(out.parse({ add: "a", 0: "b" })).toBe("a");
   });
 
   test("Handles strings", () => {
@@ -367,7 +439,9 @@ describe("The parse method", () => {
         expect(out.parse({ set: false })).toBe("");
         expect(out.parse({ set: "" })).toBe("");
         expect(out.parse({ set: [] })).toBe("");
-        expect(out.parse({ set: [, null, undefined, true, false, "", []] })).toBe("");
+        expect(
+          out.parse({ set: [, null, undefined, true, false, "", []] }),
+        ).toBe("");
       });
 
       test("Handles strings", () => {
@@ -393,7 +467,9 @@ describe("The parse method", () => {
         expect(out.parse({ add: false })).toBe("");
         expect(out.parse({ add: "" })).toBe("");
         expect(out.parse({ add: [] })).toBe("");
-        expect(out.parse({ add: [, null, undefined, true, false, "", []] })).toBe("");
+        expect(
+          out.parse({ add: [, null, undefined, true, false, "", []] }),
+        ).toBe("");
       });
 
       test("Handles strings", () => {
@@ -419,7 +495,9 @@ describe("The parse method", () => {
         expect(out.parse({ remove: false })).toBe("");
         expect(out.parse({ remove: "" })).toBe("");
         expect(out.parse({ remove: [] })).toBe("");
-        expect(out.parse({ remove: [, null, undefined, true, false, "", []] })).toBe("");
+        expect(
+          out.parse({ remove: [, null, undefined, true, false, "", []] }),
+        ).toBe("");
       });
 
       test("Handles strings", () => {
@@ -461,16 +539,16 @@ describe("The parse method", () => {
 
     describe("Takes a variant action that", () => {
       test("Handles blank parameters", () => {
-        expect(out.parse({variant: {}})).toBe("");
-        expect(out.parse({variant: [{}]})).toBe("");
+        expect(out.parse({ variant: {} })).toBe("");
+        expect(out.parse({ variant: [{}] })).toBe("");
       });
-    
+
       test("Takes Variants", () => {
-        expect(out.parse({variant: { a: "a" }})).toBe("");
-        expect(out.parse({variant: [{ a: "a" }, { b: "b" }]})).toBe("");
+        expect(out.parse({ variant: { a: "a" } })).toBe("");
+        expect(out.parse({ variant: [{ a: "a" }, { b: "b" }] })).toBe("");
       });
     });
-   
+
     describe("Takes a choose action that", () => {
       test("Handles blank parameters", () => {
         expect(out.parse({ choose: null })).toBe("");
@@ -478,33 +556,169 @@ describe("The parse method", () => {
         expect(out.parse({ choose: true })).toBe("");
         expect(out.parse({ choose: false })).toBe("");
         expect(out.parse({ choose: "" })).toBe("");
-        expect(out.parse({ choose: null })).toBe("");
-        expect(out.parse({ choose: [, null, undefined, true, false, "", []] })).toBe("");
+        expect(
+          out.parse({ choose: [, null, undefined, true, false, "", []] }),
+        ).toBe("");
       });
-    
+
       test("Handles strings", () => {
-        expect(out.parse({ choose: "a"} )).toBe("");
+        expect(out.parse({ choose: "a" })).toBe("");
         expect(out.parse({ choose: ["a", "b"] })).toBe("");
       });
-    
+
       test("Chooses variants", () => {
         expect(out.variant({ a: "a" }).parse({ choose: "a" })).toBe("a");
-        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a" })).toBe("a");
-        expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).parse({ choose: "a 2" })).toBe("a 2");
+        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a" })).toBe(
+          "a",
+        );
+        expect(
+          out
+            .variant({ a: "a", b: "b" }, { 1: "1", 2: "2" })
+            .parse({ choose: "a 2" }),
+        ).toBe("a 2");
       });
-    
+
       test("Replaces previous chosen variants", () => {
-        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a b" })).toBe("b");
-        expect(out.variant({ a: "a", b: "b" }).parse({ choose: ["a", "b"] })).toBe("b");
+        expect(out.variant({ a: "a", b: "b" }).parse({ choose: "a b" })).toBe(
+          "b",
+        );
+        expect(
+          out.variant({ a: "a", b: "b" }).parse({ choose: ["a", "b"] }),
+        ).toBe("b");
       });
-    
+
       test("Handles compound variants", () => {
         expect(out.variant({ "a b": "a b" }).parse({ choose: "a" })).toBe("");
         expect(out.variant({ "a b": "a b" }).parse({ choose: "b" })).toBe("");
         expect(out.variant({ "a b": "a b" }).parse({ choose: "a b" })).toBe("");
-        expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).parse({ choose: "a b" })).toBe("a ab");
+        expect(
+          out
+            .variant({ a: "a" }, { b: "b", "a b": "ab" })
+            .parse({ choose: "a b" }),
+        ).toBe("a ab");
       });
     });
+  });
+});
+
+describe("Immutability", () => {
+  test("Keeps previous snapshots intact", () => {
+    const base = out.add("a");
+    const next = base.add("b");
+
+    expect(base.parse()).toBe("a");
+    expect(next.parse()).toBe("a b");
+  });
+
+  test("Does not leak across sibling branches", () => {
+    const base = out.add("x");
+    const left = base.add("y");
+    const right = base.add("z");
+
+    expect(base.parse()).toBe("x");
+    expect(left.parse()).toBe("x y");
+    expect(right.parse()).toBe("x z");
+  });
+
+  test("Variants are isolated across derived instances", () => {
+    const base = out.variant({ a: "a", b: "b" });
+    const picked = base.choose("a");
+
+    expect(base.parse()).toBe("");
+    expect(picked.parse()).toBe("a");
+  });
+
+  test("Patches do not mutate their target", () => {
+    const patch = out.remove("a").add("b");
+    const target = out.set("a");
+
+    expect(target.apply(patch).parse()).toBe("b");
+    expect(target.parse()).toBe("a");
+    expect(patch.parse()).toBe("b");
+  });
+});
+
+describe("Parse caching", () => {
+  test("Returns the same string for repeated zero-arg calls", () => {
+    const instance = out.add("a").variant({ s: "p-2" }).choose("s");
+
+    expect(instance.parse()).toBe("a p-2");
+    expect(instance.parse()).toBe("a p-2");
+  });
+
+  test("Does not poison cache with runtime params", () => {
+    const instance = out.add("a");
+
+    expect(instance.parse({ add: "b" })).toBe("a b");
+    expect(instance.parse()).toBe("a");
+    expect(instance.parse("c")).toBe("a c");
+    expect(instance.parse()).toBe("a");
+  });
+});
+
+describe("Whitespace handling", () => {
+  test("Splits on tabs, newlines, carriage returns and form feeds", () => {
+    expect(out.add("a\tb").parse()).toBe("a b");
+    expect(out.add("a\nb").parse()).toBe("a b");
+    expect(out.add("a\rb").parse()).toBe("a b");
+    expect(out.add("a\fb").parse()).toBe("a b");
+    expect(out.add("a\t\n\r\f b").parse()).toBe("a b");
+  });
+
+  test("Trims mixed leading and trailing whitespace", () => {
+    expect(out.add("\t\n a b \r\f").parse()).toBe("a b");
+  });
+});
+
+describe("Deeply nested inputs", () => {
+  test("Flattens arbitrary nesting in add", () => {
+    expect(out.add([[[["a"]]]], [[["b"], "c"]]).parse()).toBe("a b c");
+  });
+
+  test("Flattens arbitrary nesting in variant and choose", () => {
+    expect(
+      out
+        .variant([[{ a: "a" }], [[{ b: "b" }]]])
+        .choose([["a"], "b"])
+        .parse(),
+    ).toBe("a b");
+  });
+
+  test("Flattens arbitrary nesting in parse params", () => {
+    expect(out.parse([[[["a", ["b"]]]]])).toBe("a b");
+  });
+});
+
+describe("Mixed parse params", () => {
+  test("Combines maps and inputs in a single call", () => {
+    expect(out.parse({ add: "a" }, "b", { add: "c" })).toBe("a b c");
+  });
+
+  test("Keeps order across maps and inputs", () => {
+    expect(out.parse("a", { set: "b" }, "c")).toBe("b c");
+  });
+
+  test("Handles maps and inputs interleaved with patches", () => {
+    expect(out.parse({ set: "a" }, "b", { apply: out.remove("a") })).toBe("b");
+  });
+});
+
+describe("Variants inside patches", () => {
+  test("Patch variants are merged when applied", () => {
+    const patch = out.variant({ s: "p-2", l: "p-4" }).choose("s");
+    expect(out.apply(patch).parse()).toBe("p-2");
+  });
+
+  test("Patch choose overrides outer choose for same variant", () => {
+    const base = out.variant({ s: "p-2", l: "p-4" }).choose("l");
+    const patch = out.choose("s");
+    expect(base.apply(patch).parse()).toBe("p-2");
+  });
+
+  test("Compound variants are evaluated after patches merge", () => {
+    const base = out.variant({ a: "a" });
+    const patch = out.variant({ b: "b", "a b": "ab" }).choose("a b");
+    expect(base.apply(patch).parse()).toBe("a ab");
   });
 });
 
@@ -531,7 +745,9 @@ describe("The choose method", () => {
     expect(out.choose(false).parse()).toBe("");
     expect(out.choose("").parse()).toBe("");
     expect(out.choose([]).parse()).toBe("");
-    expect(out.choose([, null, undefined, true, false, "", []]).parse()).toBe("");
+    expect(out.choose([, null, undefined, true, false, "", []]).parse()).toBe(
+      "",
+    );
   });
 
   test("Handles strings", () => {
@@ -541,20 +757,26 @@ describe("The choose method", () => {
   });
 
   test("Chooses variants", () => {
-    expect(out.variant({ a: "a" }).choose("a").parse()).toBe("a"); 
+    expect(out.variant({ a: "a" }).choose("a").parse()).toBe("a");
     expect(out.variant({ a: "a", b: "b" }).choose("b").parse()).toBe("b");
-    expect(out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).choose("a 2").parse()).toBe("a 2");
+    expect(
+      out.variant({ a: "a", b: "b" }, { 1: "1", 2: "2" }).choose("a 2").parse(),
+    ).toBe("a 2");
   });
 
   test("Replaces previous chosen variants", () => {
     expect(out.variant({ a: "a", b: "b" }).choose("a b").parse()).toBe("b");
-    expect(out.variant({ a: "a", b: "b" }).choose("a").choose("b").parse()).toBe("b");
+    expect(
+      out.variant({ a: "a", b: "b" }).choose("a").choose("b").parse(),
+    ).toBe("b");
   });
 
   test("Handles compound variants", () => {
     expect(out.variant({ "a b": "a b" }).choose("a").parse()).toBe("");
     expect(out.variant({ "a b": "a b" }).choose("b").parse()).toBe("");
     expect(out.variant({ "a b": "a b" }).choose("a b").parse()).toBe("");
-    expect(out.variant({ a: "a" }, { b: "b", "a b": "ab" }).choose("a b").parse()).toBe("a ab");
+    expect(
+      out.variant({ a: "a" }, { b: "b", "a b": "ab" }).choose("a b").parse(),
+    ).toBe("a ab");
   });
 });
