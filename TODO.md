@@ -1,4 +1,3 @@
-- [ ] Test that applied patches also applies variants and choices
 - [ ] Implement typed variants:
 
   ```ts
@@ -14,4 +13,4 @@
   // See https://stackoverflow.com/questions/69821826/typescript-string-autocomplete-object-structure-midway
   ```
 
-- [ ] Classes and variants order is not kept, variants are evaluated last, is this a problem?
+- [ ] Rename Map -> ? to avoid globalThis.Map collisions

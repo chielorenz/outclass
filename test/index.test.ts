@@ -741,6 +741,20 @@ describe("Variants inside patches", () => {
   });
 });
 
+describe("Evaluation order", () => {
+  test("Variant classes are inserted chronologically", () => {
+    expect(out.add("a").variant({ x: "b" }).choose("x").add("c").parse()).toBe(
+      "a b c",
+    );
+  });
+
+  test("Remove operations can remove variant classes if called after", () => {
+    expect(
+      out.add("a").variant({ x: "a" }).choose("x").remove("a").parse(),
+    ).toBe("");
+  });
+});
+
 describe("The variant method", () => {
   test("Handles blank parameters", () => {
     expect(out.variant().parse()).toBe("");

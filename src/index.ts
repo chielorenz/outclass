@@ -56,59 +56,73 @@ function opsFromMap(map: Map, ops: Op[]): void {
 }
 
 function parseOps(ops: Op[]): string {
-  const classes = new Set<string>();
   const variants: Variant[] = [];
   const choices: string[] = [];
   const mods: Mod[] = [];
 
   for (const op of ops) {
-    if (op.type === "set") {
-      classes.clear();
-      for (const v of op.value) classes.add(v);
-    } else if (op.type === "add") for (const v of op.value) classes.add(v);
-    else if (op.type === "remove") for (const v of op.value) classes.delete(v);
-    else if (op.type === "variant") variants.push(op.value);
+    if (op.type === "variant") variants.push(op.value);
     else if (op.type === "choose") for (const v of op.value) choices.push(v);
     else if (op.type === "use") mods.push(op.value);
   }
 
   const selected = new globalThis.Map<Variant, string>();
-  const compiled = variants.map((variant) => {
-    const values = new globalThis.Map<string, string[]>();
-    const compound: Array<{ choice: string; keys: string[] }> = [];
-    for (const choice in variant) {
-      values.set(choice, tokenize(variant[choice]));
-      if (choice.includes(" ")) {
-        compound.push({ choice, keys: tokenize(choice) });
-      }
+  const compiled = new globalThis.Map<
+    Variant,
+    {
+      values: globalThis.Map<string, string[]>;
+      compound: Array<{ choice: string; keys: string[] }>;
     }
-    return { variant, values, compound };
-  });
+  >();
+
+  for (const variant of variants) {
+    if (!compiled.has(variant)) {
+      const values = new globalThis.Map<string, string[]>();
+      const compound: Array<{ choice: string; keys: string[] }> = [];
+      for (const choice in variant) {
+        values.set(choice, tokenize(variant[choice]));
+        if (choice.includes(" ")) {
+          compound.push({ choice, keys: tokenize(choice) });
+        }
+      }
+      compiled.set(variant, { values, compound });
+    }
+  }
 
   for (const choice of choices) {
-    for (const item of compiled) {
-      if (item.values.has(choice)) {
-        selected.set(item.variant, choice);
+    for (const variant of variants) {
+      if (compiled.get(variant)!.values.has(choice)) {
+        selected.set(variant, choice);
         break;
       }
     }
   }
 
   const chosen = new Set(selected.values());
-  for (const item of compiled) {
-    for (const { choice, keys } of item.compound) {
+  for (const variant of variants) {
+    for (const { choice, keys } of compiled.get(variant)!.compound) {
       if (keys.every((key) => chosen.has(key))) {
-        selected.set(item.variant, choice);
+        selected.set(variant, choice);
         break;
       }
     }
   }
 
-  for (const item of compiled) {
-    const choice = selected.get(item.variant);
-    if (choice) {
-      for (const v of item.values.get(choice)!) {
-        classes.add(v);
+  const classes = new Set<string>();
+  for (const op of ops) {
+    if (op.type === "set") {
+      classes.clear();
+      for (const v of op.value) classes.add(v);
+    } else if (op.type === "add") {
+      for (const v of op.value) classes.add(v);
+    } else if (op.type === "remove") {
+      for (const v of op.value) classes.delete(v);
+    } else if (op.type === "variant") {
+      const choice = selected.get(op.value);
+      if (choice) {
+        for (const v of compiled.get(op.value)!.values.get(choice)!) {
+          classes.add(v);
+        }
       }
     }
   }
