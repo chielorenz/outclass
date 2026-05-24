@@ -8,6 +8,10 @@
   "files": [
     "lib"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chielorenz/outclass.git"
+  },
   "scripts": {
     "dev": "jest --watchAll",
     "test": "jest",
