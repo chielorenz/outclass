@@ -190,6 +190,31 @@ out
 // p-2
 ```
 
+### Type Safety
+
+Outclass provides first-class TypeScript support for variants. When you define variants, the `choose` method will automatically provide autocomplete for the valid options and strictly validate your inputs:
+
+```ts
+const btn = out.variant({ small: "p-2", large: "p-4" });
+
+// ✅ Autocompletes "small" and "large"
+btn.choose("small");
+
+// ❌ TypeScript Error: Did you mean 'Error: Variant 'bad' does not exist'?
+btn.choose("small bad");
+```
+
+You can extract the valid variant options into a reusable TypeScript union using the `VariantsOf` utility.
+
+```ts
+import { out, type VariantsOf } from "outclass";
+
+const btn = out.variant({ primary: "bg-blue-500", secondary: "bg-gray-500" });
+
+type BtnVariants = VariantsOf<typeof btn>;
+// "primary" | "secondary"
+```
+
 ### Patching
 
 The `apply` method is used to apply patches to the list of classes. Patches are evaluated last, after manipulation of

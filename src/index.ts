@@ -18,12 +18,52 @@ type Op =
   | { type: "set"; value: string[] }
   | { type: "add"; value: string[] }
   | { type: "remove"; value: string[] }
-  | { type: "apply"; value: Out }
+  | { type: "apply"; value: Out<any> }
   | { type: "variant"; value: Variant }
   | { type: "choose"; value: string[] }
   | { type: "use"; value: Mod };
 
 type Nested<Type> = Type | Nested<Type>[];
+
+type Split<S extends string> = S extends `${infer First} ${infer Rest}`
+  ? (First extends "" ? never : First) | Split<Rest>
+  : S extends ""
+    ? never
+    : S;
+
+type FindInvalidToken<S extends string, Valid extends string> =
+  Split<S> extends infer Token
+    ? Token extends string
+      ? Token extends any
+        ? [Token] extends [Valid]
+          ? never
+          : Token
+        : never
+      : never
+    : never;
+
+type ValidateCompound<S extends string, U extends string> =
+  FindInvalidToken<S, U> extends never
+    ? S
+    : `Error: Variant '${FindInvalidToken<S, U>}' does not exist`;
+
+type Validated<T, U extends string> = T extends string
+  ? T extends `${string} ${string}`
+    ? ValidateCompound<T, U>
+    : U
+  : never;
+
+type ValidatedMapped<TArgs extends readonly any[], U extends string> = {
+  [K in keyof TArgs]: Validated<TArgs[K], U>;
+} & readonly any[];
+
+type ExtractVariantTokens<T> = T extends readonly (infer Item)[]
+  ? ExtractVariantTokens<Item>
+  : T extends Record<string, string>
+    ? ExtractVariantTokens<keyof T & string>
+    : T extends string
+      ? Split<T>
+      : never;
 
 function each<Type>(node: Nested<Type>, visit: (item: Type) => void): void {
   if (Array.isArray(node)) for (const child of node) each(child, visit);
@@ -130,17 +170,17 @@ function parseOps(ops: Op[]): string {
   return mods.reduce((v, mod) => mod(v), [...classes].join(" "));
 }
 
-class Out {
-  #parent?: Out;
+class Out<U extends string = never> {
+  #parent?: Out<any>;
   #op?: Op;
   #parsed?: string;
 
-  constructor(parent?: Out, op?: Op) {
+  constructor(parent?: Out<any>, op?: Op) {
     this.#parent = parent;
     this.#op = op;
   }
 
-  static #collect(out: Out): Op[] {
+  static #collect(out: Out<any>): Op[] {
     const ops: Op[] = [];
     for (let cur: Out | undefined = out; cur; cur = cur.#parent) {
       if (cur.#op) ops.push(cur.#op);
@@ -150,7 +190,7 @@ class Out {
 
   static #resolve(ops: Op[]): Op[] {
     const direct: Op[] = [];
-    const patches: Out[] = [];
+    const patches: Out<any>[] = [];
     for (const op of ops) {
       if (op.type === "apply") patches.push(op.value);
       else direct.push(op);
@@ -160,47 +200,60 @@ class Out {
     return direct;
   }
 
-  #chain(ops: Op[]): Out {
-    let out: Out = this;
+  #chain(ops: Op[]): Out<U> {
+    let out: Out<any> = this;
     for (const op of ops) out = new Out(out, op);
-    return out;
+    return out as Out<U>;
   }
 
-  add(...items: Nested<Input>[]): Out {
+  add(...items: Nested<Input>[]): Out<U> {
     return new Out(this, { type: "add", value: tokenize(items) });
   }
 
-  remove(...items: Nested<Input>[]): Out {
+  remove(...items: Nested<Input>[]): Out<U> {
     return new Out(this, { type: "remove", value: tokenize(items) });
   }
 
-  set(...items: Nested<Input>[]): Out {
+  set(...items: Nested<Input>[]): Out<U> {
     return new Out(this, { type: "set", value: tokenize(items) });
   }
 
-  choose(...choices: Nested<Input>[]): Out {
+  choose<T = U>(
+    ...choices: [T] extends [never] ? Nested<Input>[] : U[]
+  ): Out<U>;
+  choose<T = U>(
+    ...choices: [T] extends [never] ? Nested<Input>[] : Nested<U>[]
+  ): Out<U>;
+  choose<const TArgs extends readonly string[], T = U>(
+    ...choices: [T] extends [never]
+      ? Nested<Input>[]
+      : ValidatedMapped<TArgs, U>
+  ): Out<U>;
+  choose(...choices: any[]): Out<U> {
     return new Out(this, { type: "choose", value: tokenize(choices) });
   }
 
-  apply(...outs: Nested<Out>[]): Out {
+  apply(...outs: Nested<Out<any>>[]): Out<U> {
     const ops: Op[] = [];
     each(outs, (value) => ops.push({ type: "apply", value }));
     return this.#chain(ops);
   }
 
-  variant(...variants: Nested<Variant>[]): Out {
+  variant<const V extends Variant>(
+    ...variants: Nested<V>[]
+  ): Out<U | ExtractVariantTokens<V>> {
     const ops: Op[] = [];
-    each(variants, (v) => ops.push({ type: "variant", value: v }));
-    return this.#chain(ops);
+    each(variants, (v) => ops.push({ type: "variant", value: v as Variant }));
+    return this.#chain(ops) as any;
   }
 
-  with(...defs: Nested<Def>[]): Out {
+  with(...defs: Nested<Def>[]): Out<U> {
     const ops: Op[] = [];
     each(defs, (def) => opsFromDef(def, ops));
     return this.#chain(ops);
   }
 
-  use(...mods: Nested<Mod>[]): Out {
+  use(...mods: Nested<Mod>[]): Out<U> {
     const ops: Op[] = [];
     each(mods, (mod) => ops.push({ type: "use", value: mod }));
     return this.#chain(ops);
@@ -223,4 +276,5 @@ class Out {
 }
 
 const out = new Out();
+export type VariantsOf<T extends Out<any>> = T extends Out<infer U> ? U : never;
 export { out };
