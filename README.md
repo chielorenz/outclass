@@ -6,7 +6,8 @@
 
 > Currently in pre-release version, expect breaking changes.
 
-Outclass is a CSS class manipulation tool. It can be used to create strings of CSS classes dynamically, for example:
+Outclass is a TypeScript CSS class composition library with variants, slots, and modifiers—all in a single immutable, composable, and type-safe API. It can be used to create strings of CSS classes dynamically, for example:
+
 
 ```ts
 import { out } from "outclass";
