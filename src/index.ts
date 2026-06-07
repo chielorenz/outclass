@@ -1,280 +1,240 @@
-type Input = string | undefined | null | boolean;
+type Variant = { name: string; options: Record<string, string> };
 
-type Variant = { [k: string]: string };
+type Compound = { choice: Record<string, string | string[]>; value: string };
 
 type Mod = (v: string) => string;
 
-type Def = Partial<{
-  set: Nested<Input>;
-  add: Nested<Input>;
-  remove: Nested<Input>;
-  apply: Nested<Out>;
-  variant: Nested<Variant>;
-  choose: Nested<Input>;
-  use: Nested<Mod>;
-}>;
-
 type Op =
-  | { type: "set"; value: string[] }
-  | { type: "add"; value: string[] }
-  | { type: "remove"; value: string[] }
-  | { type: "apply"; value: Out<any> }
+  | { type: "input"; value: string }
   | { type: "variant"; value: Variant }
-  | { type: "choose"; value: string[] }
-  | { type: "use"; value: Mod };
+  | { type: "compound"; value: Compound }
+  | { type: "mod"; value: Mod }
+  | { type: "slot"; value: string }
+  | { type: "push-slot" }
+  | { type: "pop-slot" };
 
-type Nested<Type> = Type | Nested<Type>[];
+type ExtractS<T> = T extends { readonly " $slots": infer S } ? S : never;
 
-type Split<S extends string> = S extends `${infer First} ${infer Rest}`
-  ? (First extends "" ? never : First) | Split<Rest>
-  : S extends ""
-    ? never
-    : S;
+type ExtractD<T> = T extends { readonly " $hasDefault": infer D }
+  ? D extends boolean
+    ? D
+    : false
+  : false;
 
-type FindInvalidToken<S extends string, Valid extends string> =
-  Split<S> extends infer Token
-    ? Token extends string
-      ? Token extends any
-        ? [Token] extends [Valid]
-          ? never
-          : Token
-        : never
-      : never
-    : never;
+type IsString<T> = T extends string ? true : false;
 
-type ValidateCompound<S extends string, U extends string> =
-  FindInvalidToken<S, U> extends never
-    ? S
-    : `Error: Variant '${FindInvalidToken<S, U>}' does not exist`;
+type Or<X extends boolean, Y extends boolean> = true extends X | Y
+  ? true
+  : false;
 
-type Validated<T, U extends string> = T extends string
-  ? T extends `${string} ${string}`
-    ? ValidateCompound<T, U>
-    : U
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+  k: infer I,
+) => void
+  ? I
   : never;
 
-type ValidatedMapped<TArgs extends readonly any[], U extends string> = {
-  [K in keyof TArgs]: Validated<TArgs[K], U>;
-} & readonly any[];
+type CompoundChoice<V> = {
+  [K in keyof V]?: Exclude<V[K], undefined> | Exclude<V[K], undefined>[];
+};
 
-type ExtractVariantTokens<T> = T extends readonly (infer Item)[]
-  ? ExtractVariantTokens<Item>
-  : T extends Record<string, string>
-    ? ExtractVariantTokens<keyof T & string>
-    : T extends string
-      ? Split<T>
-      : never;
+export type VariantsOf<T> = T extends {
+  resolve(choice?: Partial<infer V>): any;
+}
+  ? V
+  : never;
 
-function each<Type>(node: Nested<Type>, visit: (item: Type) => void): void {
-  if (Array.isArray(node)) for (const child of node) each(child, visit);
-  else visit(node);
+function isObject(value: unknown): value is Record<string, string> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function tokenize(items: Nested<Input>): string[] {
-  const tokens: string[] = [];
-  each(items, (item) => {
-    if (typeof item !== "string") return;
-    const match = item.match(/\S+/g);
-    if (match) tokens.push(...match);
-  });
-  return tokens;
-}
+class Outclass<
+  V = {},
+  S extends string = never,
+  D extends boolean = false,
+  A extends string = "base",
+> {
+  declare readonly " $slots": S;
+  declare readonly " $hasDefault": D;
 
-function opsFromDef(def: Def, ops: Op[]): void {
-  for (const type in def) {
-    if (type === "apply")
-      each(def.apply!, (value) => ops.push({ type: "apply", value }));
-    else if (type === "variant")
-      each(def.variant!, (v) => ops.push({ type: "variant", value: v }));
-    else if (type === "use")
-      each(def.use!, (value) => ops.push({ type: "use", value }));
-    else if (type === "choose")
-      ops.push({ type: "choose", value: tokenize(def.choose) });
-    else if (type === "set" || type === "add" || type === "remove")
-      ops.push({ type, value: tokenize(def[type]) });
-  }
-}
+  #parent?: Outclass<any, any, any, any>;
+  #ops: Op[];
 
-function parseOps(ops: Op[]): string {
-  const variants: Variant[] = [];
-  const choices: string[] = [];
-  const mods: Mod[] = [];
-
-  for (const op of ops) {
-    if (op.type === "variant") variants.push(op.value);
-    else if (op.type === "choose") for (const v of op.value) choices.push(v);
-    else if (op.type === "use") mods.push(op.value);
-  }
-
-  const selected = new Map<Variant, string>();
-  const compiled = new Map<
-    Variant,
-    {
-      values: Map<string, string[]>;
-      compound: Array<{ choice: string; keys: string[] }>;
-    }
-  >();
-
-  for (const variant of variants) {
-    if (!compiled.has(variant)) {
-      const values = new Map<string, string[]>();
-      const compound: Array<{ choice: string; keys: string[] }> = [];
-      for (const choice in variant) {
-        values.set(choice, tokenize(variant[choice]));
-        if (choice.includes(" ")) {
-          compound.push({ choice, keys: tokenize(choice) });
-        }
-      }
-      compiled.set(variant, { values, compound });
-    }
-  }
-
-  for (const choice of choices) {
-    for (const variant of variants) {
-      if (compiled.get(variant)!.values.has(choice)) {
-        selected.set(variant, choice);
-        break;
-      }
-    }
-  }
-
-  const chosen = new Set(selected.values());
-  for (const variant of variants) {
-    for (const { choice, keys } of compiled.get(variant)!.compound) {
-      if (keys.every((key) => chosen.has(key))) {
-        selected.set(variant, choice);
-        break;
-      }
-    }
-  }
-
-  const classes = new Set<string>();
-  for (const op of ops) {
-    if (op.type === "set") {
-      classes.clear();
-      for (const v of op.value) classes.add(v);
-    } else if (op.type === "add") {
-      for (const v of op.value) classes.add(v);
-    } else if (op.type === "remove") {
-      for (const v of op.value) classes.delete(v);
-    } else if (op.type === "variant") {
-      const choice = selected.get(op.value);
-      if (choice) {
-        for (const v of compiled.get(op.value)!.values.get(choice)!) {
-          classes.add(v);
-        }
-      }
-    }
-  }
-
-  return mods.reduce((v, mod) => mod(v), [...classes].join(" "));
-}
-
-class Out<U extends string = never> {
-  #parent?: Out<any>;
-  #op?: Op;
-  #parsed?: string;
-
-  constructor(parent?: Out<any>, op?: Op) {
+  constructor(parent?: Outclass<any, any, any, any>, ops?: Op[]) {
     this.#parent = parent;
-    this.#op = op;
+    this.#ops = ops ?? [];
   }
 
-  static #collect(out: Out<any>): Op[] {
-    const ops: Op[] = [];
-    for (let cur: Out | undefined = out; cur; cur = cur.#parent) {
-      if (cur.#op) ops.push(cur.#op);
+  static #collect(oc: Outclass<any, any, any, any>): Op[] {
+    const chunks: Op[][] = [];
+    for (
+      let cur: Outclass<any, any, any, any> | undefined = oc;
+      cur;
+      cur = cur.#parent
+    ) {
+      chunks.push(cur.#ops);
     }
-    return ops.reverse();
+    const ops: Op[] = [];
+    for (let i = chunks.length - 1; i >= 0; i--) {
+      for (const op of chunks[i]) ops.push(op);
+    }
+    return ops;
   }
 
-  static #resolve(ops: Op[]): Op[] {
-    const direct: Op[] = [];
-    const patches: Out<any>[] = [];
+  variant<K extends string, O extends Record<string, string>>(
+    name: K,
+    options: O,
+  ): Outclass<
+    V & Partial<Record<K, keyof O & string>>,
+    S,
+    Or<D, A extends "base" ? true : false>,
+    A
+  >;
+  variant(
+    choice: CompoundChoice<V>,
+    value: string,
+  ): Outclass<V, S, Or<D, A extends "base" ? true : false>, A>;
+  variant(arg1: any, arg2: any): any {
+    if (typeof arg1 === "string" && isObject(arg2)) {
+      return new Outclass(this, [
+        { type: "variant", value: { name: arg1, options: arg2 } },
+      ]);
+    }
+
+    if (isObject(arg1) && typeof arg2 === "string") {
+      return new Outclass(this, [
+        { type: "compound", value: { choice: arg1, value: arg2 } },
+      ]);
+    }
+    throw new Error(
+      "Invalid arguments passed to variant(). Expected (name, options) or (choice, value).",
+    );
+  }
+
+  slot<K extends string>(name: K): Outclass<V, S | K, D, K> {
+    return new Outclass<V, S | K, D, K>(this, [{ type: "slot", value: name }]);
+  }
+
+  transform(...values: Mod[]): Outclass<V, S, D, A> {
+    const ops: Op[] = [];
+    for (const value of values) ops.push({ type: "mod", value });
+    return new Outclass(this, ops);
+  }
+
+  add<C extends unknown[]>(
+    ...values: C
+  ): Outclass<
+    V & UnionToIntersection<VariantsOf<C[number]>>,
+    S | (ExtractS<C[number]> & string),
+    Or<
+      D,
+      A extends "base" ? Or<ExtractD<C[number]>, IsString<C[number]>> : false
+    >,
+    A
+  > {
+    const ops: Op[] = [];
+    for (const value of values) {
+      if (value instanceof Outclass) {
+        ops.push({ type: "push-slot" }, ...Outclass.#collect(value), {
+          type: "pop-slot",
+        });
+      } else if (typeof value === "string") {
+        ops.push({ type: "input", value });
+      }
+    }
+    return new Outclass(this, ops);
+  }
+
+  resolve(
+    choice?: Partial<V>,
+  ): [S] extends [never]
+    ? string
+    : [D] extends [true]
+      ? Record<S | "base", string>
+      : Record<S, string>;
+  resolve(choice?: Record<string, any>) {
+    const ops = Outclass.#collect(this);
+    const variants: Variant[] = [];
+
     for (const op of ops) {
-      if (op.type === "apply") patches.push(op.value);
-      else direct.push(op);
+      if (op.type === "variant") variants.push(op.value);
     }
-    for (const patch of patches)
-      direct.push(...Out.#resolve(Out.#collect(patch)));
-    return direct;
-  }
 
-  #chain(ops: Op[]): Out<U> {
-    let out: Out<any> = this;
-    for (const op of ops) out = new Out(out, op);
-    return out as Out<U>;
-  }
+    const selection: Record<string, string> = {};
+    for (const variant of variants) {
+      const choosen = choice?.[variant.name];
+      if (choosen && variant.options[choosen]) {
+        selection[variant.name] = variant.options[choosen];
+      } else if (variant.options.default) {
+        selection[variant.name] = variant.options.default;
+      }
+    }
 
-  add(...items: Nested<Input>[]): Out<U> {
-    return new Out(this, { type: "add", value: tokenize(items) });
-  }
+    const slotStack = ["base"];
+    const classes: Record<string, string[]> = {};
+    const globalMods: Mod[] = [];
+    const slotMods: Record<string, Mod[]> = {};
+    for (const op of ops) {
+      const currentSlot = slotStack[slotStack.length - 1]!;
+      if (op.type === "input") {
+        const tokens = op.value.split(/\s+/);
+        for (const token of tokens) {
+          if (token) (classes[currentSlot] ??= []).push(token);
+        }
+      } else if (op.type === "variant") {
+        const selected = selection[op.value.name];
+        if (selected) (classes[currentSlot] ??= []).push(selected);
+      } else if (op.type === "compound") {
+        let isActive = true;
+        for (const variantName in op.value.choice) {
+          const variantOption = op.value.choice[variantName];
+          const selectedOption = choice?.[variantName] || "default";
+          const isMatch = Array.isArray(variantOption)
+            ? variantOption.includes(selectedOption)
+            : variantOption === selectedOption;
+          if (!isMatch) {
+            isActive = false;
+            break;
+          }
+        }
+        if (isActive) (classes[currentSlot] ??= []).push(op.value.value);
+      } else if (op.type === "mod") {
+        if (currentSlot === "base") {
+          if (!globalMods.includes(op.value)) globalMods.push(op.value);
+        } else {
+          slotMods[currentSlot] ??= [];
+          if (!slotMods[currentSlot].includes(op.value))
+            slotMods[currentSlot].push(op.value);
+        }
+      } else if (op.type === "slot") {
+        slotStack[slotStack.length - 1] = op.value;
+        classes[op.value] ??= [];
+      } else if (op.type === "push-slot") {
+        slotStack.push(currentSlot);
+      } else if (op.type === "pop-slot") {
+        slotStack.pop();
+      }
+    }
 
-  remove(...items: Nested<Input>[]): Out<U> {
-    return new Out(this, { type: "remove", value: tokenize(items) });
-  }
+    const slotsObj: Record<string, string> = {};
+    for (const slotName in classes) {
+      let slotString = classes[slotName].join(" ");
+      const scoped = slotMods[slotName];
+      if (scoped) {
+        slotString = scoped.reduce(
+          (v, mod) => (globalMods.includes(mod) ? v : mod(v)),
+          slotString,
+        );
+      }
+      slotString = globalMods.reduce((v, mod) => mod(v), slotString);
+      slotsObj[slotName] = slotString;
+    }
 
-  set(...items: Nested<Input>[]): Out<U> {
-    return new Out(this, { type: "set", value: tokenize(items) });
-  }
+    const hasSlot = ops.some((op) => op.type === "slot");
 
-  choose<T = U>(
-    ...choices: [T] extends [never] ? Nested<Input>[] : U[]
-  ): Out<U>;
-  choose<T = U>(
-    ...choices: [T] extends [never] ? Nested<Input>[] : Nested<U>[]
-  ): Out<U>;
-  choose<const TArgs extends readonly string[], T = U>(
-    ...choices: [T] extends [never]
-      ? Nested<Input>[]
-      : ValidatedMapped<TArgs, U>
-  ): Out<U>;
-  choose(...choices: any[]): Out<U> {
-    return new Out(this, { type: "choose", value: tokenize(choices) });
-  }
-
-  apply(...outs: Nested<Out<any>>[]): Out<U> {
-    const ops: Op[] = [];
-    each(outs, (value) => ops.push({ type: "apply", value }));
-    return this.#chain(ops);
-  }
-
-  variant<const V extends Variant>(
-    ...variants: Nested<V>[]
-  ): Out<U | ExtractVariantTokens<V>> {
-    const ops: Op[] = [];
-    each(variants, (v) => ops.push({ type: "variant", value: v as Variant }));
-    return this.#chain(ops) as any;
-  }
-
-  with(...defs: Nested<Def>[]): Out<U> {
-    const ops: Op[] = [];
-    each(defs, (def) => opsFromDef(def, ops));
-    return this.#chain(ops);
-  }
-
-  use(...mods: Nested<Mod>[]): Out<U> {
-    const ops: Op[] = [];
-    each(mods, (mod) => ops.push({ type: "use", value: mod }));
-    return this.#chain(ops);
-  }
-
-  parse(...params: Array<Nested<Def> | Nested<Input>>): string {
-    if (params.length === 0 && this.#parsed !== undefined) return this.#parsed;
-
-    const ops = Out.#collect(this);
-    each(params, (param) => {
-      if (typeof param === "object" && param !== null)
-        opsFromDef(param as Def, ops);
-      else ops.push({ type: "add", value: tokenize(param as Input) });
-    });
-
-    const parsed = parseOps(Out.#resolve(ops));
-    if (params.length === 0) this.#parsed = parsed;
-    return parsed;
+    return hasSlot ? slotsObj : (slotsObj.base ?? "");
   }
 }
 
-const out = new Out();
-export type VariantsOf<T extends Out<any>> = T extends Out<infer U> ? U : never;
-export { out };
+const oc = new Outclass();
+
+export { oc, type Outclass };

@@ -1,58 +1,47 @@
 # Outclass
 
-![dependencies](https://flat.badgen.net/bundlephobia/dependency-count/outclas?color=blue)
-![bundle size](https://flat.badgen.net/bundlephobia/minzip/outclass)
-![types](https://flat.badgen.net/npm/types/outclass?color=blue)
-
 > Currently in pre-release version, expect breaking changes.
 
-Outclass is a TypeScript CSS class composition library with variants, slots, and modifiers—all in a single immutable, composable, and type-safe API. It can be used to create strings of CSS classes dynamically, for example:
-
+Outclass is a TypeScript CSS class composition library with an immutable, type-safe API.
 
 ```ts
-import { out } from "outclass";
+import { oc, VariantsOf } from "outclass";
 
-// Generates a string of unique class names
-out.parse("flex", "rounded", "flex");
-// flex rounded
+oc.add("flex", "p-2").resolve();
+// flex p-2
 
-// Implements the builder pattern
-out.set("blur w-4").remove("w-4").add("shadow w-2").parse();
-// blur shadow w-2
-
-// Has a variants system
-out.variant({ sm: "p-2", lg: "p-4" }).choose("sm").parse();
+const sizeVariant = oc.variant("size", { sm: "p-2", lg: "p-6" });
+type SizeVariant = VariantsOf<typeof sizeVariant>;
+// { size?: "sm" | "lg" | undefined; }
+sizeVariant.resolve({ size: "sm" });
 // p-2
 
-// Is patchable
-const patch = out.remove("m-2").add("m-4");
-out.set("border m-2").apply(patch).parse();
-// border m-4
+const titleSlot = oc.slot("title").add("text-lg");
+titleSlot.resolve();
+// { title: "text-lg" }
 
-// All in a single call
-out.parse({
-  add: "m-2",
-  apply: patch,
-  variant: { sm: "p-2", lg: "p-4" },
-  choose: "sm",
-  use: (cls) => cls.replace("m-4", "m-8"),
-});
-// m-8 p-2
+const prefixed = oc.transform(v => v.split(" ").map(t => "oc-" + t).join(" "));
+prefixed.add("rounded").resolve();
+// oc-rounded
+
+oc.add(
+  "gap-4",
+  prefixed,
+  titleSlot.add(sizeVariant),
+).resolve({ size: "lg" });
+// { base: 'oc-gap-4', title: 'oc-text-lg oc-p-6' }
 ```
 
 ## Installation
 
-Outclass is available on [npm](https://www.npmjs.com/package/outclass) as ECMAScript module (ESM) and works on any JavaScript
-runtime:
+Outclass is available on [npm](https://www.npmjs.com/package/outclass) as an ECMAScript module and works on any JavaScript runtime:
 
 ```bash
 # Node.js
 npm add outclass
-pnpm add outclass
-yarn add outclass
 
 # Deno
-deno add npm:outclass
+deno add outclass
 
 # Bun
 bun add outclass
@@ -62,244 +51,235 @@ And in the browser:
 
 ```html
 <script type="module">
-  import { out } from "https://esm.sh/outclass";
+  import { oc } from "https://esm.sh/outclass";
 </script>
 ```
 
-The `out` object can be imported from the `outclass` module:
+The `oc` object can be imported from the `outclass` module:
 
 ```ts
-import { out } from "outclass";
+import { oc } from "outclass";
 ```
 
-## Documentation
+## Usage
 
-Outclass lets you to create strings of CSS classes. Internally it keeps a list of classes and offers methods to
-manipulate it. The `parse` method returns a single string consisting of a space-separated list of unique CSS classes,
-which can be used in the `class` attribute of HTML elements.
+### Adding classes
 
-There are two main ways of use, which can be combined as desired:
-
-- A [builder](#builder): to programmatically add and remove classes
-- A [variant system](#variants): to specify and select style variants
-
-### Inputs
-
-Most methods takes as arguments multiple strings and arrays of strings (infinitely nested):
+The `add` method takes any number of strings, splits them by whitespace and adds them to the internal state. The `resolve` method computes the final result and returns it as a string.
 
 ```ts
-out.parse("flex", ["grow"], [["p-2"]]);
-// flex grow p-2
+oc.add("flex p-2").resolve();
+// flex p-2
+ 
+oc.add("flex", "p-2").resolve();
+// flex p-2
 ```
 
-Each input string is splitted into single classes on white-spaces:
+Outclass objects are immutable, once created, their internal state stays unchanged.
 
 ```ts
-out.add("flex grow").remove("grow").remove("flex").parse();
-// ""
-```
-
-It only understand string inputs, but for convenience it also takes, `null`, `undefined` and `boolean` values, so it
-can be used with the `&&` operator and `?.` optional chaining:
-
-```ts
-const isMuted = false;
-const props = { classes: "bg-slate-700" };
-out.parse([
-  isMuted && "cursor-not-allowed",
-  props?.classes,
-  [null, undefined, false, true],
-]);
-// bg-slate-700
-```
-
-### Immutability
-
-The `out` object is immutable, each call to its methods returns a new instance:
-
-```ts
-const style = out.add("text-end");
-
-out.parse();
-// ""
-
-style.parse();
-// text-end
-```
-
-This makes it more convenient as you can use it directly in method chaining without the need to create new instances
-of it every time:
-
-```ts
-out.set("box-content p-4").apply(out.remove("p-4")).parse();
-// box-content
-```
-
-### Using the builder<a id="builder"></a>
-
-The `out` object implements the builder pattern, the `add` and `remove` methods add and remove classes respectively,
-the `set` method replaces the current list of classes with a new one:
-
-```ts
-out.add("flex").parse();
-// flex
-
-out.add("grow p-2").remove("grow").parse();
-// p-2
-
-out.add("flex").set("p-2").parse();
+const unused = oc.add("flex");
+oc.add("p-2").resolve();
 // p-2
 ```
 
-### Using variants<a id="variants"></a>
-
-The `variant` method is used to specify variants of style, for example a _size_ variant can have options _small_ and
-_large_ and a _color_ variant can have options _violet_ and _blue_. The `choose` method selects which variants to use.
-Only one option per variant can be selected at a time:
+Every method call, except `resolve`, returns a new Outclass instance with the updated state.
 
 ```ts
-out
-  .variant({ small: "p-2", large: "p-4" })
-  .variant({ violet: "bg-violet-500", blue: "bg-blue-500" })
-  .choose("small violet")
-  .parse();
-// p-2 bg-violet-500
+oc.add("flex").add("p-2").resolve();
+// flex p-2
 ```
 
-Variants can have _compound_ options, which are option with multiple names separated by spaces. Compound options are
-selected when all names are passed to the `choose` method:
+### Variants
+
+Variants are a way to define optional blocks of classes that are added to the final result only if selected at compute time. The `variant` method adds a variant to the internal state; the `resolve` method is used to select variants.
 
 ```ts
-out
-  .variant({ small: "p-2", large: "p-4" })
-  .variant({ violet: "bg-violet-500", blue: "bg-blue-500" })
-  .variant({ "small violet": "rounded" })
-  .choose("small violet")
-  .parse();
-// p-2 bg-violet-500 rounded
-```
-
-The `choose` method can be called multiple times to change the selected variants, this means that it can be used to
-specify the default variant and then change it later:
-
-```ts
-out
-  .variant({ small: "p-2", large: "p-4" })
-  .choose("small")
-  .choose("large", "small")
-  .parse();
+oc.variant("size", { 
+  sm: "p-2",
+  lg: "p-6",
+}).resolve({ size: "sm" });
 // p-2
 ```
 
-### Type Safety
-
-Outclass provides first-class TypeScript support for variants. When you define variants, the `choose` method will automatically provide autocomplete for the valid options and strictly validate your inputs:
+The `default` option is used if no other option is selected.
 
 ```ts
-const btn = out.variant({ small: "p-2", large: "p-4" });
-
-// ✅ Autocompletes "small" and "large"
-btn.choose("small");
-
-// ❌ TypeScript Error: Did you mean 'Error: Variant 'bad' does not exist'?
-btn.choose("small bad");
+oc.variant("style", { 
+  default: "font-mono",
+  modern: "font-sans",
+}).resolve();
+// font-mono
 ```
 
-You can extract the valid variant options into a reusable TypeScript union using the `VariantsOf` utility.
+#### Compound variants
+
+Compound variants are a way to add classes only when specific options of other variants are selected.
 
 ```ts
-import { out, type VariantsOf } from "outclass";
-
-const btn = out.variant({ primary: "bg-blue-500", secondary: "bg-gray-500" });
-
-type BtnVariants = VariantsOf<typeof btn>;
-// "primary" | "secondary"
+oc.variant("size", {
+  sm: "p-2",
+  lg: "p-4",
+}).variant("style", { 
+  default: "font-mono",
+  modern: "font-sans",
+}).variant(
+  { size: "sm", style: "default"},
+  "font-bold",
+).resolve({ size: "sm" });
+// p-2 font-mono font-bold
 ```
 
-### Patching
+#### Extracting variants types
 
-The `apply` method is used to apply patches to the list of classes. Patches are evaluated last, after manipulation of
-the main object are, and the order they are applied is kept. A patch simply is a `out` object:
+Variant types can be extracted using the `VariantsOf` utility.
 
 ```ts
-const patch = out.remove("m-2").add("m-4");
-out.set("border m-2").apply(patch).parse();
-// border m-4
-
-const pick = out.choose("small");
-out.variant({ small: "p-2", large: "p-4" }).choose("large").apply(pick).parse();
-// p-2
+const sizeVariant = oc.variant("size", { sm: "p-2", lg: "p-6" });
+type SizeVariant = VariantsOf<typeof sizeVariant>;
+// { size?: "sm" | "lg" | undefined; }
 ```
 
-### Using modifiers
+### Slots
 
-The `use` method takes a modifier function that intercepts the final space-separated string of classes just before it is returned. This is extremely useful to integrate tools like `tailwind-merge` or to apply custom transformations:
+The `slot` method creates internal branches. Every class added to a slot gets scoped to that slot. When `resolve` finds a slot in the internal state, an object is returned instead of a string.
 
 ```ts
-out
-  .set("btn bg-primary text-white")
-  .use((cls) => cls.replaceAll("primary", "secondary"))
-  .parse();
-// btn bg-secondary text-white
-
-import { twMerge } from "tailwind-merge";
-out.set("p-2 p-4").use(twMerge).parse();
-// p-4
+oc.slot("header").add("p-2").resolve();
+// { header: "p-2" }
 ```
 
-### All in a single call
-
-All functionality can be combined in a single call to the `with` method, which takes an object where each key is a
-method name and the value is the arguments to pass to that method:
+When at least one slot is defined, classes not attached to any slot end up in the "base" slot.
 
 ```ts
-// All in a single call
-out
-  .with({
-    set: "grid grow",
-    remove: "grid",
-    add: "flex",
-    variant: { small: "p-2", large: "p-4" },
-    choose: "large",
-    use: (cls) => cls.replace("p-4", "p-8"),
-  })
-  .parse();
-// grow flex p-8
+oc.add("flex").slot("header").add("p-2").resolve();
+// { base: "flex", header: "p-2" }
 ```
 
-### The `parse` method
-
-The `parse` can be called with no arguments to get the current list of classes, but it can also be called with a
-string, in which case it acts as the `add` method, or with an object, in which case it acts as the `with` method:
+Slot scope doesn't leak. Sibling values in the same `add()` call do not affect each other.
 
 ```ts
-out.set("flex").parse("grow");
-// flex grow
+const header = oc.slot("header").add("gap-4").transform(s => "oc-" + s);
+oc.add("flex", header, "p-2").resolve();
+// { base: "flex p-2", header: "oc-gap-4" }
+```
 
-out.set("flex").parse({
-  add: "m-4",
-  variant: { sm: "p-2", lg: "p-4" },
-  choose: "sm",
+### Transformers
+
+The `transform` method takes any number of callbacks and calls them right before the final result is returned, passing the computed string as an argument. They are called in the order they are added.
+
+```ts
+const prefix = (v: string) => v.split(" ").map(t => "oc-" + t).join(" ");
+oc.add("flex p-2").transform(prefix).resolve();
+// oc-flex oc-p-2
+```
+
+### Composability
+
+The `add` method also accepts any number of Outclass objects, the internal state of given instances is added to the main object.
+
+```ts
+const styleVariant = oc.variant("style", { 
+  default: "font-mono",
+  modern: "font-sans",
 });
-// flex m-4 p-2
+
+oc.add("flex", styleVariant).resolve({ style: "modern" });
+// flex font-sans
+```
+
+Composability is a defining feature of Outclass. You can use it for something as simple as sharing a common transformer, or go all out and build deeply nested, reusable components:
+
+```ts
+import { oc as baseOc } from "outclass";
+
+// Prefixing all classes via a transformer on a shared Outclass instance
+const prefixer = (v: string) => v.split(" ").map((t) => "tw-" + t).join(" ");
+const oc = baseOc.transform(prefixer);
+
+// Define common primitives
+const surface = oc.add("border border-slate-200");
+
+// Define common slots
+const titleSlot = oc.slot("title");
+
+// Define common variants
+const spacingVariant = oc.variant("spacing", {
+  compact: "p-4",
+  relaxed: "p-8",
+});
+const toneVariant = oc.variant("tone", {
+  default: "text-slate-900",
+  muted: "text-slate-500",
+});
+
+// Define common transformers
+const makeImportant = oc.transform((v: string) => v.split(" ").map((t) => t + "!").join(" "));
+
+// Style the Card component
+const card = oc.add(
+  "flex flex-col",
+  surface,
+  titleSlot.add(spacingVariant, makeImportant),
+  oc.slot("body").add("text-sm", spacingVariant, toneVariant),
+);
+
+// Extending the Card component style
+const interactiveCard = card.add(
+  "hover:shadow-lg",
+  titleSlot.add("hover:text-blue-600"),
+);
+
+interactiveCard.resolve({
+  spacing: "relaxed",
+  tone: "default",
+});
+// {
+//   base: 'tw-flex tw-flex-col tw-border tw-border-slate-200 tw-hover:shadow-lg',
+//   title: 'tw-p-8! tw-hover:text-blue-600!',
+//   body: 'tw-text-sm tw-p-8 tw-text-slate-900'
+// }
 ```
 
 ## TailwindCSS
 
-Outclass is especially useful when used with atomic or utility-first CSS frameworks such as TailwindCSS. To enable VS
-Code IntelliSense for TailwindCSS classes, add this regex to your `.vscode/settings.json`:
+Outclass is especially useful when used with utility-first CSS frameworks such as TailwindCSS.
+
+### tailwind-merge
+
+To use tailwind-merge, add `twMerge` as a transformer to an Outclass instance and use that instance as the base for all other instances.
+
+```ts
+// src/lib/utils.ts
+import { oc } from "outclass";
+import { twMerge } from "tailwind-merge";
+
+const baseOc = oc.transform(twMerge);
+
+export { baseOc as oc };
+```
+
+### IntelliSense
+
+To enable VS Code IntelliSense for TailwindCSS classes while using Outclass, add this regex to your `.vscode/settings.json`:
 
 ```jsonc
 {
   "tailwindCSS.experimental.classRegex": [
-    // Enable IntelliSense on Outclass method calls outside "className" and "class" attributes
-    [
-      "\\.(?:parse|add|remove|set|with|variant)\\s*\\(\\s*([\\s\\S]*?)\\s*\\)\\s*",
-      "[\"'`]([^\"'`]*)[\"'`]",
-    ],
-  ],
+    // Matches oc.add("...") and extracts the strings inside
+    ["oc\\.add\\(([^;]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    
+    // Matches the values inside oc.variant(..., { ... }) objects
+    ["oc\\.variant\\([^,]+,\\s*\\{([^}]*)\\}\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ]
 }
 ```
+
+## Why Outclass?
+
+There are plenty of great tools that accomplish similar things out there, so why build another one? I simply think Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and however I want, that is basically it.
+
+I took variants from cva, the "kitchen sink" design from clsx, slots from tailwind-variants, and added a fully composable API. If you prefer the way cva defines variants, just use that.
 
 ## Contributing
 
@@ -309,17 +289,16 @@ Use the included docker compose configuration to spin up the development environ
 docker compose up
 ```
 
-This will create a container named `outclass`, install node dependencies and start the server which will watch for changes in the source code and run tests.
+This will create a container named `outclass`, install Node.js dependencies, and start the test runner in watch mode, which will watch for changes in the source code and run the tests.
 
 ### Debugging
 
-Debugging is available throw a typescript REPL that exposes the `out` object. If you are using VSCode, you can start the REPL and attach to the debugger by running the `Debug REPL` configuration from the "Run and Debug" view, execution will pause at breakpoints now.
+Debugging is available through a TypeScript REPL that exposes the `oc` object. If you are using VS Code, you can start the REPL and attach to the debugger by running the `Debug REPL` configuration from the "Run and Debug" view; execution will pause at breakpoints now.
 
-### Devcontainer
+### Dev Container
 
-The project includes a devcontainer configuration for VSCode. To use it, open the project in VSCode and select "Reopen in Container" from the command palette. Beware that the .gitconfig used by the devcontainer may be different from your global config.
+The project includes a Dev Container configuration for VS Code. To use it, open the project in VS Code and select "Reopen in Container" from the command palette. Beware that the `.gitconfig` used by the Dev Container may be different from your global config.
 
 ## Acknowledgements
 
-Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva) and
-[clsx](https://github.com/lukeed/clsx).
+Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva), [clsx](https://github.com/lukeed/clsx), and [tailwind-variants](https://github.com/heroui-inc/tailwind-variants).

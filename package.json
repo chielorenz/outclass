@@ -1,7 +1,7 @@
 {
   "name": "outclass",
-  "version": "0.3.0",
-  "description": "CSS class manipulation tool",
+  "version": "0.4.0",
+  "description": "CSS class composition library",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
@@ -26,6 +26,11 @@
   },
   "keywords": [
     "class",
+    "composable",
+    "variants",
+    "slots",
+    "tailwind",
+    "cva",
     "atomic css",
     "utility-first css"
   ],
@@ -44,6 +49,18 @@
     "collectCoverage": true,
     "coverageReporters": [
       "text"
-    ]
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "CommonJS",
+            "isolatedModules": false,
+            "verbatimModuleSyntax": false
+          }
+        }
+      ]
+    }
   }
 }
