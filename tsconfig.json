@@ -1,33 +1,33 @@
 {
-  "compilerOptions": {
-    /* Language and Environment */
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+	"compilerOptions": {
+		/* Language and Environment */
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 
-    /* Modules */
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+		/* Modules */
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
 
-    /* Emit */
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./lib",
+		/* Emit */
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"outDir": "./lib",
 
-    /* Interop Constraints */
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+		/* Interop Constraints */
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
 
-    /* Type Checking */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "skipLibCheck": true,
-    "ignoreDeprecations": "6.0",
-    "types": ["node"]
-  },
-  "include": ["src", "test", "benchmarks", "repl.ts"],
-  "exclude": ["node_modules", "lib"]
+		/* Type Checking */
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"skipLibCheck": true,
+		"ignoreDeprecations": "6.0",
+		"types": ["node"]
+	},
+	"include": ["src", "test", "benchmarks", "repl.ts"],
+	"exclude": ["node_modules", "lib"]
 }

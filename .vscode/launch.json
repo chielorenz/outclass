@@ -1,12 +1,12 @@
 {
-    "configurations": [
-        {
-            // Run debug REPL in a terminal and attach debugger. Run this configuration from the "Run and Debug" view,
-            // then `npm run debug`, the execution will pause at breakpoints.
-            "name": "Debug REPL",
-            "command": "npm run debug",
-            "request": "launch",
-            "type": "node-terminal"
-        }
-    ]
+	"configurations": [
+		{
+			// Run debug REPL in a terminal and attach debugger. Run this configuration from the "Run and Debug" view,
+			// then `npm run debug`, the execution will pause at breakpoints.
+			"name": "Debug REPL",
+			"command": "npm run debug",
+			"request": "launch",
+			"type": "node-terminal"
+		}
+	]
 }

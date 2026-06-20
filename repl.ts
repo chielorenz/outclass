@@ -1,4 +1,4 @@
-import repl from "repl";
+import repl from "node:repl";
 import { oc } from "./src/index";
 
 const replServer = repl.start();

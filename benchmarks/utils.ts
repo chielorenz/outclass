@@ -1,12 +1,12 @@
-import * as os from "os";
-import * as fs from "fs";
-import * as path from "path";
-import { Console } from "console";
+import { Console } from "node:console";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 export function getSystemInfoString(includeCompetitors = true) {
 	const cpus = os.cpus();
 	const cpuModel = cpus.length > 0 ? cpus[0].model : "Unknown CPU";
-	const totalMem = Math.round(os.totalmem() / 1024 / 1024 / 1024) + "GB";
+	const totalMem = `${Math.round(os.totalmem() / 1024 / 1024 / 1024)}GB`;
 
 	let ocVer = "unknown",
 		cvaVer = "unknown",
@@ -16,9 +16,9 @@ export function getSystemInfoString(includeCompetitors = true) {
 		const pkgPath = path.resolve(process.cwd(), "package.json");
 		const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 		ocVer = pkg.version;
-	} catch (e) {}
+	} catch (_e) {}
 
-	let output = `-------------------------------------------
+	const output = `-------------------------------------------
 System: ${os.platform()} ${os.release()} (${os.arch()})
 CPU: ${cpuModel} (${cpus.length} cores)
 Memory: ${totalMem}
@@ -27,7 +27,7 @@ Node: ${process.version}
 Outclass: v${ocVer}`;
 
 	if (!includeCompetitors) {
-		return output + "\n-------------------------------------------";
+		return `${output}\n-------------------------------------------`;
 	}
 
 	try {
@@ -36,7 +36,7 @@ Outclass: v${ocVer}`;
 			"node_modules/class-variance-authority/package.json",
 		);
 		cvaVer = JSON.parse(fs.readFileSync(cvaPath, "utf8")).version;
-	} catch (e) {}
+	} catch (_e) {}
 
 	try {
 		const tvPath = path.resolve(
@@ -44,7 +44,7 @@ Outclass: v${ocVer}`;
 			"node_modules/tailwind-variants/package.json",
 		);
 		tvVer = JSON.parse(fs.readFileSync(tvPath, "utf8")).version;
-	} catch (e) {}
+	} catch (_e) {}
 
 	return (
 		output +

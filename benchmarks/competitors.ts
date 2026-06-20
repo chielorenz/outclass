@@ -1,8 +1,8 @@
-import { getSystemInfoString, createLogger } from "./utils";
-import { Bench } from "tinybench";
 import { cva } from "class-variance-authority";
 import { tv } from "tailwind-variants";
+import { Bench } from "tinybench";
 import { oc } from "../src/index";
+import { createLogger, getSystemInfoString } from "./utils";
 
 function getBanchTable(bench: Bench) {
 	const rawTable = bench.table() as Record<string, any>[];
@@ -35,7 +35,7 @@ function getBanchTable(bench: Bench) {
 
 		let deltaStr = "/";
 
-		if (!taskName.startsWith("[OC") && ocBaseline && !isNaN(latencyNs)) {
+		if (!taskName.startsWith("[OC") && ocBaseline && !Number.isNaN(latencyNs)) {
 			const percentDiff = ((latencyNs - ocBaseline) / ocBaseline) * 100;
 
 			if (percentDiff > 0) {

@@ -1,6 +1,6 @@
-import { getSystemInfoString, createLogger } from "./utils";
 import { Bench } from "tinybench";
 import { oc } from "../src/index";
+import { createLogger, getSystemInfoString } from "./utils";
 
 async function runOutclassSuite() {
 	const logger = createLogger("benchmark");
