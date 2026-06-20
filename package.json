@@ -35,7 +35,6 @@
 		"build": "tsup src/index.ts --format esm --dts --clean -d lib",
 		"debug": "tsx --inspect repl.ts",
 		"bench": "tsx benchmarks/benchmark.ts",
-		"bench:competitors": "tsx benchmarks/competitors.ts",
 		"lint": "biome lint --write",
 		"check": "biome check --write",
 		"format": "biome format --write"
