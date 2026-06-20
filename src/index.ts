@@ -1,6 +1,6 @@
 type Variant = { name: string; options: Record<string, string> };
 
-type Compound = { choice: Record<string, string | string[]>; value: string };
+type Compound = { choice: Record<string, string[]>; value: string };
 
 type Mod = (v: string) => string;
 
@@ -13,11 +13,13 @@ type Op =
 	| { type: "push-slot" }
 	| { type: "pop-slot" };
 
-type ExtractS<T> = T extends { readonly " $slots": infer S } ? S : never;
+type ExtractSlots<T> = T extends { readonly " $slots": infer Slots }
+	? Slots
+	: never;
 
-type ExtractD<T> = T extends { readonly " $hasDefault": infer D }
-	? D extends boolean
-		? D
+type ExtractBase<T> = T extends { readonly " $hasBase": infer HasBase }
+	? HasBase extends boolean
+		? HasBase
 		: false
 	: false;
 
@@ -33,14 +35,16 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 	? I
 	: never;
 
-type CompoundChoice<V> = {
-	[K in keyof V]?: Exclude<V[K], undefined> | Exclude<V[K], undefined>[];
+type CompoundChoice<Variants> = {
+	[K in keyof Variants]?:
+		| Exclude<Variants[K], undefined>
+		| Exclude<Variants[K], undefined>[];
 };
 
 export type VariantsOf<T> = T extends {
-	resolve(choice?: Partial<infer V>): any;
+	resolve(choice?: Partial<infer Variants>): any;
 }
-	? V
+	? Variants
 	: never;
 
 function isObject(value: unknown): value is Record<string, string> {
@@ -48,13 +52,13 @@ function isObject(value: unknown): value is Record<string, string> {
 }
 
 class Outclass<
-	V = {},
-	S extends string = never,
-	D extends boolean = false,
-	A extends string = "base",
+	Variants = {},
+	Slots extends string = never,
+	HasBase extends boolean = false,
+	ActiveSlot extends string = "base",
 > {
-	declare readonly " $slots": S;
-	declare readonly " $hasDefault": D;
+	declare readonly " $slots": Slots;
+	declare readonly " $hasBase": HasBase;
 
 	#parent?: Outclass<any, any, any, any>;
 	#ops: Op[];
@@ -71,7 +75,7 @@ class Outclass<
 		this.#ops = ops ?? [];
 	}
 
-	#ensureCached(): void {
+	#buildCache(): void {
 		if (this.#collectedOps) return;
 
 		const chunks: Op[][] = [];
@@ -118,7 +122,7 @@ class Outclass<
 	}
 
 	static #collect(oc: Outclass<any, any, any, any>, out: Op[]): void {
-		oc.#ensureCached();
+		oc.#buildCache();
 		for (let i = 0; i < oc.#collectedOps!.length; i++) {
 			out.push(oc.#collectedOps![i]);
 		}
@@ -128,15 +132,20 @@ class Outclass<
 		name: K,
 		options: O,
 	): Outclass<
-		V & Partial<Record<K, keyof O & string>>,
-		S,
-		Or<D, A extends "base" ? true : false>,
-		A
+		Variants & Partial<Record<K, keyof O & string>>,
+		Slots,
+		Or<HasBase, ActiveSlot extends "base" ? true : false>,
+		ActiveSlot
 	>;
 	variant(
-		choice: CompoundChoice<V>,
+		choice: CompoundChoice<Variants>,
 		value: string,
-	): Outclass<V, S, Or<D, A extends "base" ? true : false>, A>;
+	): Outclass<
+		Variants,
+		Slots,
+		Or<HasBase, ActiveSlot extends "base" ? true : false>,
+		ActiveSlot
+	>;
 	variant(arg1: any, arg2: any): any {
 		if (typeof arg1 === "string" && isObject(arg2)) {
 			return new Outclass(this, [
@@ -145,8 +154,12 @@ class Outclass<
 		}
 
 		if (isObject(arg1) && typeof arg2 === "string") {
+			const normalizedChoice: Record<string, string[]> = {};
+			for (const k in arg1) {
+				normalizedChoice[k] = Array.isArray(arg1[k]) ? arg1[k] : [arg1[k]];
+			}
 			return new Outclass(this, [
-				{ type: "compound", value: { choice: arg1, value: arg2 } },
+				{ type: "compound", value: { choice: normalizedChoice, value: arg2 } },
 			]);
 		}
 		throw new Error(
@@ -154,11 +167,13 @@ class Outclass<
 		);
 	}
 
-	slot<K extends string>(name: K): Outclass<V, S | K, D, K> {
-		return new Outclass<V, S | K, D, K>(this, [{ type: "slot", value: name }]);
+	slot<K extends string>(name: K): Outclass<Variants, Slots | K, HasBase, K> {
+		return new Outclass<Variants, Slots | K, HasBase, K>(this, [
+			{ type: "slot", value: name },
+		]);
 	}
 
-	transform(...values: Mod[]): Outclass<V, S, D, A> {
+	transform(...values: Mod[]): Outclass<Variants, Slots, HasBase, ActiveSlot> {
 		const ops: Op[] = [];
 		for (const value of values) ops.push({ type: "mod", value });
 		return new Outclass(this, ops);
@@ -167,13 +182,15 @@ class Outclass<
 	add<C extends unknown[]>(
 		...values: C
 	): Outclass<
-		V & UnionToIntersection<VariantsOf<C[number]>>,
-		S | (ExtractS<C[number]> & string),
+		Variants & UnionToIntersection<VariantsOf<C[number]>>,
+		Slots | (ExtractSlots<C[number]> & string),
 		Or<
-			D,
-			A extends "base" ? Or<ExtractD<C[number]>, IsString<C[number]>> : false
+			HasBase,
+			ActiveSlot extends "base"
+				? Or<ExtractBase<C[number]>, IsString<C[number]>>
+				: false
 		>,
-		A
+		ActiveSlot
 	> {
 		const ops: Op[] = [];
 		for (let i = 0; i < values.length; i++) {
@@ -195,14 +212,14 @@ class Outclass<
 	}
 
 	resolve(
-		choice?: Partial<V>,
-	): [S] extends [never]
+		choice?: Partial<Variants>,
+	): [Slots] extends [never]
 		? string
-		: [D] extends [true]
-			? Record<S | "base", string>
-			: Record<S, string>;
+		: [HasBase] extends [true]
+			? Record<Slots | "base", string>
+			: Record<Slots, string>;
 	resolve(choice?: Record<string, any>) {
-		this.#ensureCached();
+		this.#buildCache();
 		if (!this.#hasDynamic && this.#staticResult !== undefined) {
 			return this.#staticResult;
 		}
@@ -237,7 +254,7 @@ class Outclass<
 		}
 
 		const slotStack = ["base"];
-		const classes: Record<string, string[]> = {};
+		const classes: Record<string, string> = {};
 		const globalMods: Mod[] = [];
 		const slotMods: Record<string, Mod[]> = {};
 
@@ -245,24 +262,30 @@ class Outclass<
 			const op = ops[i];
 			const currentSlot = slotStack[slotStack.length - 1]!;
 			if (op.type === "input") {
-				(classes[currentSlot] ??= []).push(op.value);
+				const cur = classes[currentSlot];
+				classes[currentSlot] = cur ? cur + " " + op.value : op.value;
 			} else if (op.type === "variant") {
 				const selected = selection[op.value.name];
-				if (selected) (classes[currentSlot] ??= []).push(selected);
+				if (selected) {
+					const cur = classes[currentSlot];
+					classes[currentSlot] = cur ? cur + " " + selected : selected;
+				}
 			} else if (op.type === "compound") {
 				let isActive = true;
 				for (const variantName in op.value.choice) {
 					const variantOption = op.value.choice[variantName];
 					const selectedOption = choice?.[variantName] || "default";
-					const isMatch = Array.isArray(variantOption)
-						? variantOption.includes(selectedOption)
-						: variantOption === selectedOption;
-					if (!isMatch) {
+					if (!variantOption.includes(selectedOption)) {
 						isActive = false;
 						break;
 					}
 				}
-				if (isActive) (classes[currentSlot] ??= []).push(op.value.value);
+				if (isActive) {
+					const cur = classes[currentSlot];
+					classes[currentSlot] = cur
+						? cur + " " + op.value.value
+						: op.value.value;
+				}
 			} else if (op.type === "mod") {
 				if (currentSlot === "base") {
 					if (!globalMods.includes(op.value)) globalMods.push(op.value);
@@ -273,7 +296,7 @@ class Outclass<
 				}
 			} else if (op.type === "slot") {
 				slotStack[slotStack.length - 1] = op.value;
-				classes[op.value] ??= [];
+				classes[op.value] ??= "";
 			} else if (op.type === "push-slot") {
 				slotStack.push(currentSlot);
 			} else if (op.type === "pop-slot") {
@@ -283,7 +306,7 @@ class Outclass<
 
 		const slotsObj: Record<string, string> = {};
 		for (const slotName in classes) {
-			let slotString = classes[slotName].join(" ");
+			let slotString = classes[slotName];
 			const scoped = slotMods[slotName];
 			if (scoped) {
 				slotString = scoped.reduce(
