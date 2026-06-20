@@ -254,7 +254,7 @@ There are plenty of great tools that accomplish similar things out there, so why
 Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and
 however I want.
 
-Also, when used in repeated calls it is way faster than competitors. See the [benchmarks](./benchmarks/benchmark.ts).
+Also, when used in repeated calls it is way faster than competitors. See the [benchmarks](./benchmarks).
 
 ## TailwindCSS
 
