@@ -1,4 +1,5 @@
-import { oc, VariantsOf } from "../src/index";
+import { describe, expect, test } from "vitest";
+import { oc, type VariantsOf } from "../src/index";
 
 describe("add()", () => {
   describe("string inputs", () => {
@@ -555,10 +556,8 @@ describe("edge cases", () => {
 });
 
 describe("resolve types", () => {
-  type AssertEqual<T, U> = [T] extends [U]
-    ? [U] extends [T]
-      ? true
-      : false
+  type AssertEqual<T, U> = [T] extends [U] ? [U] extends [T] ? true
+    : false
     : false;
 
   test("VariantsOf extracts variant types", () => {
@@ -617,7 +616,7 @@ describe("integration — README composability example", () => {
       v
         .split(" ")
         .map((t) => t + "!")
-        .join(" "),
+        .join(" ")
     );
 
     const card = prefixedOc.add(
@@ -638,7 +637,8 @@ describe("integration — README composability example", () => {
     });
 
     expect(result).toEqual({
-      base: "tw-flex tw-flex-col tw-order tw-border-slate-200 tw-hover:shadow-lg",
+      base:
+        "tw-flex tw-flex-col tw-order tw-border-slate-200 tw-hover:shadow-lg",
       title: "tw-p-8! tw-hover:text-blue-600!",
       body: "tw-text-sm tw-p-8 tw-text-slate-900",
     });
