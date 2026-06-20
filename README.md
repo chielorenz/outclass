@@ -281,24 +281,6 @@ To enable VS Code IntelliSense for TailwindCSS classes while using Outclass, add
 }
 ```
 
-## Contributing
-
-Use the included docker compose configuration to spin up the development environment:
-
-```bash
-docker compose up
-```
-
-This will create a container named `outclass`, install Node.js dependencies, and start the test runner in watch mode, which will watch for changes in the source code and run the tests.
-
-### Debugging
-
-Debugging is available through a TypeScript REPL that exposes the `oc` object. If you are using VS Code, you can start the REPL and attach to the debugger by running the `Debug REPL` configuration from the "Run and Debug" view; execution will pause at breakpoints now.
-
-### Dev Container
-
-The project includes a Dev Container configuration for VS Code. To use it, open the project in VS Code and select "Reopen in Container" from the command palette. Beware that the `.gitconfig` used by the Dev Container may be different from your global config.
-
 ## Acknowledgements
 
 Inspiration for this project comes mainly from the amazing job done by [cva](https://github.com/joe-bell/cva), [clsx](https://github.com/lukeed/clsx), and [tailwind-variants](https://github.com/heroui-inc/tailwind-variants).
