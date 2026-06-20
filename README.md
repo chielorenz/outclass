@@ -34,7 +34,8 @@ oc.add(
 
 ## Installation
 
-Outclass is available on [npm](https://www.npmjs.com/package/outclass) as an ECMAScript module and works on any JavaScript runtime:
+Outclass is available on [npm](https://www.npmjs.com/package/outclass) as an ECMAScript module and works on any
+JavaScript runtime:
 
 ```bash
 # Node.js
@@ -65,7 +66,8 @@ import { oc } from "outclass";
 
 ### Adding classes
 
-The `add` method takes any number of strings, splits them by whitespace and adds them to the internal state. The `resolve` method computes the final result and returns it as a string.
+The `add` method takes any number of strings, splits them by whitespace and adds them to the internal state. The
+`resolve` method computes the final result and returns it as a string.
 
 ```ts
 oc.add("flex p-2").resolve();
@@ -92,7 +94,8 @@ oc.add("flex").add("p-2").resolve();
 
 ### Variants
 
-Variants are a way to define optional blocks of classes that are added to the final result only if selected at compute time. The `variant` method adds a variant to the internal state; the `resolve` method is used to select variants.
+Variants are a way to define optional blocks of classes that are added to the final result only if selected at compute
+time. The `variant` method adds a variant to the internal state; the `resolve` method is used to select variants.
 
 ```ts
 oc.variant("size", { 
@@ -130,7 +133,7 @@ oc.variant("size", {
 // p-2 font-mono font-bold
 ```
 
-#### Extracting variants types
+#### Extracting variant types
 
 Variant types can be extracted using the `VariantsOf` utility.
 
@@ -142,7 +145,8 @@ type SizeVariant = VariantsOf<typeof sizeVariant>;
 
 ### Slots
 
-The `slot` method creates internal branches. Every class added to a slot gets scoped to that slot. When `resolve` finds a slot in the internal state, an object is returned instead of a string.
+The `slot` method creates internal branches. Every class added to a slot gets scoped to that slot. When `resolve` finds
+a slot in the internal state, an object is returned instead of a string.
 
 ```ts
 oc.slot("header").add("p-2").resolve();
@@ -166,7 +170,8 @@ oc.add("flex", header, "p-2").resolve();
 
 ### Transformers
 
-The `transform` method takes any number of callbacks and calls them right before the final result is returned, passing the computed string as an argument. They are called in the order they are added.
+The `transform` method takes any number of callbacks and calls them right before the final result is returned, passing
+the computed string as an argument. They are called in the order they are added.
 
 ```ts
 const prefix = (v: string) => v.split(" ").map(t => "oc-" + t).join(" ");
@@ -176,7 +181,8 @@ oc.add("flex p-2").transform(prefix).resolve();
 
 ### Composability
 
-The `add` method also accepts any number of Outclass objects, the internal state of given instances is added to the main object.
+The `add` method also accepts any number of Outclass objects, the internal state of the given instances is added to the
+main object.
 
 ```ts
 const styleVariant = oc.variant("style", { 
@@ -188,7 +194,8 @@ oc.add("flex", styleVariant).resolve({ style: "modern" });
 // flex font-sans
 ```
 
-Composability is a defining feature of Outclass. You can use it for something as simple as sharing a common transformer, or go all out and build deeply nested, reusable components:
+Composability is a defining feature of Outclass. You can use it for something as simple as sharing a common transformer,
+or go all out and build deeply nested, reusable components:
 
 ```ts
 import { oc as baseOc } from "outclass";
@@ -243,9 +250,11 @@ interactiveCard.resolve({
 
 ## Why Outclass?
 
-There are plenty of great tools that accomplish similar things out there, so why build another one? I simply think Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and however I want, that is basically it.
+There are plenty of great tools that accomplish similar things out there, so why build another one? I simply think
+Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and
+however I want.
 
-I took variants from cva, slots from tailwind-variants, and added a fully composable API. If you don't need composability just use one of those.
+Olso, when used in repeated calls it is way faser the competitors, see the [benchmark](./benckmarks/benchmark.md).
 
 ## TailwindCSS
 
