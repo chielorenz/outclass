@@ -58,26 +58,70 @@ class Outclass<
 
   #parent?: Outclass<any, any, any, any>;
   #ops: Op[];
+  #collectedOps?: Op[];
+  #collectedVariants?: Variant[];
+  #hasSlot?: boolean;
+  #hasDynamic?: boolean;
+  #staticResult?: string | Record<string, string>;
+  #choiceKeys?: string[];
+  #dynamicCache?: Record<string, string | Record<string, string>>;
 
   constructor(parent?: Outclass<any, any, any, any>, ops?: Op[]) {
     this.#parent = parent;
     this.#ops = ops ?? [];
   }
 
-  static #collect(oc: Outclass<any, any, any, any>): Op[] {
+  #ensureCached(): void {
+    if (this.#collectedOps) return;
+
     const chunks: Op[][] = [];
-    for (
-      let cur: Outclass<any, any, any, any> | undefined = oc;
-      cur;
-      cur = cur.#parent
-    ) {
+    let cur: Outclass<any, any, any, any> | undefined = this;
+    while (cur) {
+      if (cur.#collectedOps) {
+        chunks.push(cur.#collectedOps);
+        break;
+      }
       chunks.push(cur.#ops);
+      cur = cur.#parent;
     }
-    const ops: Op[] = [];
+    const cached: Op[] = [];
     for (let i = chunks.length - 1; i >= 0; i--) {
-      for (const op of chunks[i]) ops.push(op);
+      for (let j = 0; j < chunks[i].length; j++) {
+        cached.push(chunks[i][j]);
+      }
     }
-    return ops;
+    this.#collectedOps = cached;
+
+    this.#ops = [];
+    this.#parent = undefined;
+
+    const variants: Variant[] = [];
+    const choiceKeys = new Set<string>();
+    let hasSlot = false;
+    let hasDynamic = false;
+    for (let i = 0; i < cached.length; i++) {
+      const op = cached[i];
+      if (op.type === "variant" || op.type === "compound") hasDynamic = true;
+      if (op.type === "variant") {
+        variants.push(op.value);
+        choiceKeys.add(op.value.name);
+      } else if (op.type === "compound") {
+        for (const k in op.value.choice) choiceKeys.add(k);
+      } else if (op.type === "slot") {
+        hasSlot = true;
+      }
+    }
+    this.#collectedVariants = variants;
+    this.#hasSlot = hasSlot;
+    this.#hasDynamic = hasDynamic;
+    this.#choiceKeys = Array.from(choiceKeys);
+  }
+
+  static #collect(oc: Outclass<any, any, any, any>, out: Op[]): void {
+    oc.#ensureCached();
+    for (let i = 0; i < oc.#collectedOps!.length; i++) {
+      out.push(oc.#collectedOps![i]);
+    }
   }
 
   variant<K extends string, O extends Record<string, string>>(
@@ -132,13 +176,19 @@ class Outclass<
     A
   > {
     const ops: Op[] = [];
-    for (const value of values) {
-      if (value instanceof Outclass) {
-        ops.push({ type: "push-slot" }, ...Outclass.#collect(value), {
-          type: "pop-slot",
-        });
-      } else if (typeof value === "string") {
-        ops.push({ type: "input", value });
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      if (typeof value === "string") {
+        if (!/[\s]/.test(value)) {
+          if (value) ops.push({ type: "input", value });
+        } else {
+          const cleaned = value.trim().replace(/\s+/g, " ");
+          if (cleaned) ops.push({ type: "input", value: cleaned });
+        }
+      } else if (value instanceof Outclass) {
+        ops.push({ type: "push-slot" });
+        Outclass.#collect(value, ops);
+        ops.push({ type: "pop-slot" });
       }
     }
     return new Outclass(this, ops);
@@ -152,15 +202,32 @@ class Outclass<
       ? Record<S | "base", string>
       : Record<S, string>;
   resolve(choice?: Record<string, any>) {
-    const ops = Outclass.#collect(this);
-    const variants: Variant[] = [];
-
-    for (const op of ops) {
-      if (op.type === "variant") variants.push(op.value);
+    this.#ensureCached();
+    if (!this.#hasDynamic && this.#staticResult !== undefined) {
+      return this.#staticResult;
     }
 
+    let cacheKey = "";
+    if (this.#hasDynamic) {
+      const keys = this.#choiceKeys!;
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const val = choice?.[k];
+        if (val !== undefined) {
+          cacheKey += k + ":" + typeof val + ":" + val + ";";
+        }
+      }
+      if (this.#dynamicCache && this.#dynamicCache[cacheKey] !== undefined) {
+        return this.#dynamicCache[cacheKey];
+      }
+    }
+
+    const ops = this.#collectedOps!;
+    const variants = this.#collectedVariants!;
+
     const selection: Record<string, string> = {};
-    for (const variant of variants) {
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i];
       const choosen = choice?.[variant.name];
       if (choosen && variant.options[choosen]) {
         selection[variant.name] = variant.options[choosen];
@@ -173,13 +240,12 @@ class Outclass<
     const classes: Record<string, string[]> = {};
     const globalMods: Mod[] = [];
     const slotMods: Record<string, Mod[]> = {};
-    for (const op of ops) {
+
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i];
       const currentSlot = slotStack[slotStack.length - 1]!;
       if (op.type === "input") {
-        const tokens = op.value.split(/\s+/);
-        for (const token of tokens) {
-          if (token) (classes[currentSlot] ??= []).push(token);
-        }
+        (classes[currentSlot] ??= []).push(op.value);
       } else if (op.type === "variant") {
         const selected = selection[op.value.name];
         if (selected) (classes[currentSlot] ??= []).push(selected);
@@ -229,9 +295,14 @@ class Outclass<
       slotsObj[slotName] = slotString;
     }
 
-    const hasSlot = ops.some((op) => op.type === "slot");
-
-    return hasSlot ? slotsObj : (slotsObj.base ?? "");
+    const result = this.#hasSlot ? slotsObj : (slotsObj.base ?? "");
+    if (!this.#hasDynamic) {
+      this.#staticResult = result;
+    } else {
+      if (!this.#dynamicCache) this.#dynamicCache = Object.create(null);
+      this.#dynamicCache![cacheKey] = result;
+    }
+    return result;
   }
 }
 

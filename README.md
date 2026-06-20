@@ -241,6 +241,12 @@ interactiveCard.resolve({
 // }
 ```
 
+## Why Outclass?
+
+There are plenty of great tools that accomplish similar things out there, so why build another one? I simply think Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and however I want, that is basically it.
+
+I took variants from cva, slots from tailwind-variants, and added a fully composable API. If you don't need composability just use one of those.
+
 ## TailwindCSS
 
 Outclass is especially useful when used with utility-first CSS frameworks such as TailwindCSS.
@@ -274,12 +280,6 @@ To enable VS Code IntelliSense for TailwindCSS classes while using Outclass, add
   ]
 }
 ```
-
-## Why Outclass?
-
-There are plenty of great tools that accomplish similar things out there, so why build another one? I simply think Outclass's ergonomics are better: the immutable and composable API allows me to define and share styles wherever and however I want, that is basically it.
-
-I took variants from cva, the "kitchen sink" design from clsx, slots from tailwind-variants, and added a fully composable API. If you prefer the way cva defines variants, just use that.
 
 ## Contributing
 
