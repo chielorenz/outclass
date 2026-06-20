@@ -53,14 +53,13 @@ Outclass: v${ocVer}`;
 }
 
 export function createLogger() {
-	const filenamePrefix = "benchmark";
 	const saveIndex = process.argv.indexOf("--save");
 	if (saveIndex !== -1) {
 		let outFilename = process.argv[saveIndex + 1];
 		if (!outFilename || outFilename.startsWith("--")) {
 			const date = new Date();
 			const dateString = `${String(date.getMonth() + 1).padStart(2, "0")}_${String(date.getDate()).padStart(2, "0")}_${String(date.getFullYear()).slice(-2)}`;
-			outFilename = `./benchmarks/${filenamePrefix}_result_${dateString}.txt`;
+			outFilename = `./benchmarks/result_${dateString}.txt`;
 		}
 		const writeStream = fs.createWriteStream(
 			path.resolve(process.cwd(), outFilename),
